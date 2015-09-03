@@ -54,6 +54,7 @@ import java.util.TreeSet;
 import org.apache.hadoop.hive.common.cli.ShellCmdExecutor;
 import org.apache.hive.jdbc.HiveStatement;
 
+import com.sun.security.auth.module.UnixSystem;
 
 public class Commands {
   private final BeeLine beeLine;
@@ -1036,7 +1037,7 @@ public class Commands {
 
 
   public boolean connect(String line) throws Exception {
-    String example = "Usage: connect <url> <username> <password> [driver]"
+    String example = "Usage: connect <url> [driver]"
         + BeeLine.getSeparator();
 
     String[] parts = beeLine.split(line);
@@ -1049,9 +1050,7 @@ public class Commands {
     }
 
     String url = parts.length < 2 ? null : parts[1];
-    String user = parts.length < 3 ? null : parts[2];
-    String pass = parts.length < 4 ? null : parts[3];
-    String driver = parts.length < 5 ? null : parts[4];
+    String driver = parts.length < 3 ? null : parts[2];
 
     Properties props = new Properties();
     if (url != null) {
@@ -1060,12 +1059,10 @@ public class Commands {
     if (driver != null) {
       props.setProperty("driver", driver);
     }
-    if (user != null) {
-      props.setProperty("user", user);
-    }
-    if (pass != null) {
-      props.setProperty("password", pass);
-    }
+
+    UnixSystem unix = new UnixSystem();
+    props.setProperty("user", unix.getUsername());
+    props.setProperty("password", "");
 
     return connect(props);
   }
@@ -1124,7 +1121,7 @@ public class Commands {
       }
     }
 
-    beeLine.info("Connecting to " + url);
+    beeLine.info("Connecting to " + url + " as " + username);
 
     if (username == null) {
       username = beeLine.getConsoleReader().readLine("Enter username for " + url + ": ");
