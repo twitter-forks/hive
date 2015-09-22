@@ -38,6 +38,7 @@ import org.apache.hadoop.fs.LocalFileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.fs.permission.FsAction;
+import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.shims.HadoopShims;
 import org.apache.hadoop.hive.shims.HadoopShims.HdfsFileStatus;
@@ -501,7 +502,12 @@ public final class FileUtils {
     LOG.info("Creating directory if it doesn't exist: " + f);
     if (!inheritPerms) {
       //just create the directory
-      return fs.mkdirs(f);
+      boolean res = fs.mkdirs(f);
+      // Give write permissions to Owner and Group
+      FsPermission permission = new FsPermission(FsAction.ALL, FsAction.ALL, FsAction.READ_EXECUTE);
+      LOG.info("Setting permission to directory " + permission.toString());
+      fs.setPermission(f, permission);
+      return res;
     } else {
       //Check if the directory already exists. We want to change the permission
       //to that of the parent directory only for newly created directories.
