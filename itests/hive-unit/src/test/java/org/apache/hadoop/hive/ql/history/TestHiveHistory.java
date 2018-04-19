@@ -146,23 +146,29 @@ public class TestHiveHistory extends TestCase {
       if (ret != 0) {
         fail("Failed");
       }
-      HiveHistoryViewer hv = new HiveHistoryViewer(SessionState.get()
-          .getHiveHistory().getHistFileName());
-      Map<String, QueryInfo> jobInfoMap = hv.getJobInfoMap();
-      Map<String, TaskInfo> taskInfoMap = hv.getTaskInfoMap();
-      if (jobInfoMap.size() != 1) {
-        fail("jobInfo Map size not 1");
-      }
 
-      if (taskInfoMap.size() != 1) {
-        fail("jobInfo Map size not 1");
-      }
+      // Disabled HiveHistoryViewer feature if history-scribe is enabled.
+      // Since data scribed to data pipeline has latency, this feature may not be feasible
+      // and supported in the future. TBD
+      if (!ss.getConf().getBoolVar(HiveConf.ConfVars.HIVE_SESSION_HISTORY_SCRIBE_ENABLED)) {
+        HiveHistoryViewer hv = new HiveHistoryViewer(SessionState.get()
+            .getHiveHistory().getHistFileName());
+        Map<String, QueryInfo> jobInfoMap = hv.getJobInfoMap();
+        Map<String, TaskInfo> taskInfoMap = hv.getTaskInfoMap();
+        if (jobInfoMap.size() != 1) {
+          fail("jobInfo Map size not 1");
+        }
 
-      cmd = (String) jobInfoMap.keySet().toArray()[0];
-      QueryInfo ji = jobInfoMap.get(cmd);
+        if (taskInfoMap.size() != 1) {
+          fail("jobInfo Map size not 1");
+        }
 
-      if (!ji.hm.get(Keys.QUERY_NUM_TASKS.name()).equals("1")) {
-        fail("Wrong number of tasks");
+        cmd = (String) jobInfoMap.keySet().toArray()[0];
+        QueryInfo ji = jobInfoMap.get(cmd);
+
+        if (!ji.hm.get(Keys.QUERY_NUM_TASKS.name()).equals("1")) {
+          fail("Wrong number of tasks");
+        }
       }
 
     } catch (Exception e) {

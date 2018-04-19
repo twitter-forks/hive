@@ -17,7 +17,6 @@
  */
 
 package org.apache.hadoop.hive.ql.session;
-import static org.apache.hadoop.hive.metastore.MetaStoreUtils.DEFAULT_DATABASE_NAME;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,6 +40,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.locks.ReentrantLock;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -66,6 +69,7 @@ import org.apache.hadoop.hive.ql.exec.tez.TezSessionState;
 import org.apache.hadoop.hive.ql.history.HiveHistory;
 import org.apache.hadoop.hive.ql.history.HiveHistoryImpl;
 import org.apache.hadoop.hive.ql.history.HiveHistoryProxyHandler;
+import org.apache.hadoop.hive.ql.history.HiveScribeImpl;
 import org.apache.hadoop.hive.ql.lockmgr.HiveTxnManager;
 import org.apache.hadoop.hive.ql.lockmgr.LockException;
 import org.apache.hadoop.hive.ql.lockmgr.TxnManagerFactory;
@@ -90,9 +94,7 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
+import static org.apache.hadoop.hive.metastore.MetaStoreUtils.DEFAULT_DATABASE_NAME;
 
 /**
  * SessionState encapsulates common data associated with a session.
@@ -565,7 +567,11 @@ public class SessionState {
 
     if (startSs.hiveHist == null){
       if (startSs.getConf().getBoolVar(HiveConf.ConfVars.HIVE_SESSION_HISTORY_ENABLED)) {
-        startSs.hiveHist = new HiveHistoryImpl(startSs);
+        if (startSs.getConf().getBoolVar(HiveConf.ConfVars.HIVE_SESSION_HISTORY_SCRIBE_ENABLED)) {
+          startSs.hiveHist = new HiveScribeImpl(startSs);
+        } else {
+          startSs.hiveHist = new HiveHistoryImpl(startSs);
+        }
       } else {
         // Hive history is disabled, create a no-op proxy
         startSs.hiveHist = HiveHistoryProxyHandler.getNoOpHiveHistoryProxy();
@@ -1000,7 +1006,11 @@ public class SessionState {
     if (historyEnabled) {
       // Uses a no-op proxy
       if (ss.hiveHist.getHistFileName() == null) {
-        ss.hiveHist = new HiveHistoryImpl(ss);
+        if (ss.getConf().getBoolVar(HiveConf.ConfVars.HIVE_SESSION_HISTORY_SCRIBE_ENABLED)) {
+          ss.hiveHist = new HiveScribeImpl(ss);
+        } else {
+          ss.hiveHist = new HiveHistoryImpl(ss);
+        }
       }
     } else {
       if (ss.hiveHist.getHistFileName() != null) {
