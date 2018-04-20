@@ -38,7 +38,6 @@ public class QueryCompletedEventScriber {
   private static final Logger LOG = LoggerFactory.getLogger("hive.ql.exec.HiveScribeImpl");
 
   private static final String DASH = "-";
-  //private static final Logger log = Logger.get(QueryCompletedEventScriber.class);
 
   private TwitterScriber scriber = new TwitterScriber("test_hive_query_completion");
 
@@ -46,14 +45,12 @@ public class QueryCompletedEventScriber {
     try {
       scriber.scribe(toThriftQueryCompletionEvent(event));
     } catch (TException e) {
-      /*log.warn(e,
-          String.format("Could not serialize thrift object of Query(id=%s, user=%s, env=%s, schema=$s.%s.%s)",
+      LOG.warn(String.format("%s, %s", e,
+          String.format("Could not serialize thrift object of Query(id=%s, user=%s, session=%s, database=%s)",
               event.queryID,
               event.username,
-              event.environment,
-              event.database,
-              event.catalog.orElse(DASH),
-              event.schema.orElse(DASH)));*/
+              event.sessionID,
+              event.database)));
     }
   }
 
@@ -73,7 +70,6 @@ public class QueryCompletedEventScriber {
 
     for (Map.Entry<String, MapRedStats> ent : event.mapReduceStats.entrySet()) {
       QueryStageInfo thriftCounterInfo = new com.twitter.hive.thriftjava.QueryStageInfo();
-
       String key = ent.getKey();
       thriftCounterInfo.stage_id = key;
       thriftCounterInfo.job_id = ent.getValue().getJobId().toString();
@@ -82,21 +78,8 @@ public class QueryCompletedEventScriber {
       thriftCounterInfo.number_mappers = ent.getValue().getNumMap();
       thriftCounterInfo.number_reducers = ent.getValue().getNumReduce();
       thriftCounterInfo.task_numbers = ent.getValue().getTaskNumbers().toString();
-
-
-      LOG.info(String.format("starting: %s", key));
-      LOG.info(String.format("%s", thriftCounterInfo.stage_id));
-      LOG.info(String.format("%s", thriftCounterInfo.job_id));
-      LOG.info(String.format("%s", thriftCounterInfo.cpu_msec));
-      LOG.info(String.format("%s", thriftCounterInfo.counters));
-      LOG.info(String.format("%s", thriftCounterInfo.number_mappers));
-      LOG.info(String.format("%s", thriftCounterInfo.number_reducers));
-      LOG.info(String.format("%s", thriftCounterInfo.task_numbers));
-      LOG.info(":end");
-
       thriftEvent.map_reduce_info.put(key, thriftCounterInfo);
     }
-
     return thriftEvent;
   }
 }

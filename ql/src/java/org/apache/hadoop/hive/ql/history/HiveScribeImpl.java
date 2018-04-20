@@ -38,12 +38,12 @@ public class HiveScribeImpl implements HiveHistory {
   /**
    * Construct HiveScribeImpl object and open history log file.
    *
-   * @param ss
+   * @param sessionState
    */
-  public HiveScribeImpl(SessionState ss) {
+  public HiveScribeImpl(SessionState sessionState) {
     LOG.info("Instantiated an instance for HiveScribeImpl. Replaced hive history file at local dir\n");
-    HashMap<String, String> hm = new HashMap<String, String>();
-    hm.put(HiveHistory.Keys.SESSION_ID.name(), ss.getSessionId());
+    HashMap<String, String> eventStats = new HashMap<String, String>();
+    eventStats.put(HiveHistory.Keys.SESSION_ID.name(), sessionState.getSessionId());
   }
 
   @Override
@@ -52,35 +52,33 @@ public class HiveScribeImpl implements HiveHistory {
     return String.format("%s", histFileName);
   }
 
-  void createNewQueryMetricEntry (HiveHistory.RecordTypes rt, Map<String, String> keyValMap) {
-    String QueryID = keyValMap.get("QUERY_ID");
+  void createNewQueryMetricEntry (Map<String, String> eventStats) {
+    String QueryID = eventStats.get("QUERY_ID");
     QueryStats newQueryStats;
-    newQueryStats = new QueryStats(QueryID, keyValMap.get("QUERY_STRING"), System.currentTimeMillis(), 0);
+    newQueryStats = new QueryStats(QueryID, eventStats.get("QUERY_STRING"), System.currentTimeMillis(), 0);
     this.queryStatsMap.put(QueryID, newQueryStats);
   }
 
-  void scribeCompletedQueryMetricEntry (HiveHistory.RecordTypes rt, Map<String, String> keyValMap) {
-    String QueryID = keyValMap.get("QUERY_ID");
+  void scribeQueryMetricEntry (Map<String, String> eventStats) {
+    String QueryID = eventStats.get("QUERY_ID");
     QueryStats stats = this.queryStatsMap.get(QueryID);
     stats.queryEnd = System.currentTimeMillis();
 
-    // Append session info from SessionState ss = SessionState.get();
-    SessionState ss = SessionState.get();
-    if (ss != null && ss.getUserName() != null && ss.getUserIpAddress() != null && ss.getSessionId() != null) {
-      stats.username = ss.getUserName().toString();
-      stats.IPAddress = ss.getUserIpAddress().toString();
-      stats.sessionID = ss.getSessionId().toString();
-      stats.database = ss.getCurrentDatabase().toString();
-      stats.mapReduceStatsDesc = ss.getMapRedStats().toString();
-      stats.currentTimeStamp = ss.getQueryCurrentTimestamp().toString();
-      stats.mapReduceStats = ss.getMapRedStats();
+    SessionState sessionState = SessionState.get();
+    if (sessionState != null && sessionState.getUserName() != null && sessionState.getUserIpAddress() != null && sessionState.getSessionId() != null) {
+      stats.username = sessionState.getUserName().toString();
+      stats.IPAddress = sessionState.getUserIpAddress().toString();
+      stats.sessionID = sessionState.getSessionId().toString();
+      stats.database = sessionState.getCurrentDatabase().toString();
+      stats.mapReduceStatsDesc = sessionState.getMapRedStats().toString();
+      stats.currentTimeStamp = sessionState.getQueryCurrentTimestamp().toString();
+      stats.mapReduceStats = sessionState.getMapRedStats();
     }
 
     QueryCompletedEventScriber hiveHistScriber = new QueryCompletedEventScriber();
     if (stats != null) {
       hiveHistScriber.handle(stats);
       LOG.info("Query stats passed to log pipeline");
-      // Remove entry from hashmap after sending/scribing stats to log pipeline
       this.queryStatsMap.remove(QueryID);
       LOG.info("Removed Query stats from cache");
     }
@@ -99,7 +97,7 @@ public class HiveScribeImpl implements HiveHistory {
     queryInfo.hm.put(HiveHistory.Keys.QUERY_ID.name(), id);
     queryInfo.hm.put(HiveHistory.Keys.QUERY_STRING.name(), cmd);
     queryInfoMap.put(id, queryInfo);
-    createNewQueryMetricEntry(HiveHistory.RecordTypes.QueryStart, queryInfo.hm);
+    createNewQueryMetricEntry(queryInfo.hm);
   }
 
   @Override
@@ -122,18 +120,18 @@ public class HiveScribeImpl implements HiveHistory {
   }
 
   @Override
-  public void setTaskCounters(String queryId, String taskId, Counters ctrs) {
+  public void setTaskCounters(String queryId, String taskId, Counters counters) {
     String id = queryId + ":" + taskId;
     HiveHistory.QueryInfo queryInfo = queryInfoMap.get(queryId);
     StringBuilder sb1 = new StringBuilder("");
     HiveHistory.TaskInfo taskInfo = taskInfoMap.get(id);
-    if ((taskInfo == null) || (ctrs == null)) {
+    if ((taskInfo == null) || (counters == null)) {
       return;
     }
     StringBuilder sb = new StringBuilder("");
     try {
       boolean first = true;
-      for (Counters.Group group : ctrs) {
+      for (Counters.Group group : counters) {
         for (Counters.Counter counter : group) {
           if (first) {
             first = false;
@@ -181,7 +179,7 @@ public class HiveScribeImpl implements HiveHistory {
     if (queryInfo == null) {
       return;
     }
-    scribeCompletedQueryMetricEntry(HiveHistory.RecordTypes.QueryEnd, queryInfo.hm);
+    scribeQueryMetricEntry(queryInfo.hm);
     queryInfoMap.remove(queryId);
   }
 
