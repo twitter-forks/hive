@@ -20,6 +20,8 @@ public class QueryStats {
 
   // map-reduce job stats based on stage IDs
   public Map<String, MapRedStats> mapReduceStats;
+  public Map<String, QueryPlan> plansInfo;
+  public Map<String, String> taskProgress;
 
   public QueryStats (String queryID, String queryString, long start, long end) {
     this.queryID = queryID;

@@ -18,8 +18,6 @@ import org.slf4j.LoggerFactory;
 public class HiveScribeImpl implements HiveHistory {
   private static final Logger LOG = LoggerFactory.getLogger("hive.ql.exec.HiveScribeImpl");
 
-  String histFileName; // History file name
-
   private Map<String, String> idToTableMap = null;
 
   // Job Hash Map
@@ -48,14 +46,15 @@ public class HiveScribeImpl implements HiveHistory {
 
   @Override
   public String getHistFileName() {
-    histFileName = "HiveQueryCompeletionScribe";
-    return String.format("%s", histFileName);
+    return "HiveQueryCompeletionScribe";
   }
 
   void createNewQueryMetricEntry (Map<String, String> eventStats) {
     String QueryID = eventStats.get("QUERY_ID");
     QueryStats newQueryStats;
     newQueryStats = new QueryStats(QueryID, eventStats.get("QUERY_STRING"), System.currentTimeMillis(), 0);
+    newQueryStats.plansInfo = new HashMap<String, QueryPlan>();
+    newQueryStats.taskProgress = new HashMap<String, String>();
     this.queryStatsMap.put(QueryID, newQueryStats);
   }
 
@@ -70,7 +69,9 @@ public class HiveScribeImpl implements HiveHistory {
       stats.IPAddress = sessionState.getUserIpAddress().toString();
       stats.sessionID = sessionState.getSessionId().toString();
       stats.database = sessionState.getCurrentDatabase().toString();
-      stats.mapReduceStatsDesc = sessionState.getMapRedStats().toString();
+      if (sessionState.getMapRedStats() != null) {
+        stats.mapReduceStatsDesc = sessionState.getMapRedStats().toString();
+      }
       stats.currentTimeStamp = sessionState.getQueryCurrentTimestamp().toString();
       stats.mapReduceStats = sessionState.getMapRedStats();
     }
@@ -83,14 +84,14 @@ public class HiveScribeImpl implements HiveHistory {
       LOG.info("Removed Query stats from cache");
     }
     else {
-      LOG.info("Stats is null. Nothing pass to log pipeline");
+      LOG.info("Stats is null. Nothing passed to log pipeline");
     }
   }
 
   @Override
   public void startQuery(String cmd, String id) {
-    SessionState ss = SessionState.get();
-    if (ss == null) {
+    SessionState sessionState = SessionState.get();
+    if (sessionState == null) {
       return;
     }
     HiveHistory.QueryInfo queryInfo = new HiveHistory.QueryInfo();
@@ -123,12 +124,12 @@ public class HiveScribeImpl implements HiveHistory {
   public void setTaskCounters(String queryId, String taskId, Counters counters) {
     String id = queryId + ":" + taskId;
     HiveHistory.QueryInfo queryInfo = queryInfoMap.get(queryId);
-    StringBuilder sb1 = new StringBuilder("");
+    StringBuilder stringBuilder1 = new StringBuilder("");
     HiveHistory.TaskInfo taskInfo = taskInfoMap.get(id);
     if ((taskInfo == null) || (counters == null)) {
       return;
     }
-    StringBuilder sb = new StringBuilder("");
+    StringBuilder stringBuilder = new StringBuilder("");
     try {
       boolean first = true;
       for (Counters.Group group : counters) {
@@ -136,21 +137,21 @@ public class HiveScribeImpl implements HiveHistory {
           if (first) {
             first = false;
           } else {
-            sb.append(',');
+            stringBuilder.append(',');
           }
-          sb.append(group.getDisplayName());
-          sb.append('.');
-          sb.append(counter.getDisplayName());
-          sb.append(':');
-          sb.append(counter.getCounter());
+          stringBuilder.append(group.getDisplayName());
+          stringBuilder.append('.');
+          stringBuilder.append(counter.getDisplayName());
+          stringBuilder.append(':');
+          stringBuilder.append(counter.getCounter());
           String tab = getRowCountTableName(counter.getDisplayName());
           if (tab != null) {
-            if (sb1.length() > 0) {
-              sb1.append(",");
+            if (stringBuilder1.length() > 0) {
+              stringBuilder1.append(",");
             }
-            sb1.append(tab);
-            sb1.append('~');
-            sb1.append(counter.getCounter());
+            stringBuilder1.append(tab);
+            stringBuilder1.append('~');
+            stringBuilder1.append(counter.getCounter());
             queryInfo.rowCountMap.put(tab, counter.getCounter());
           }
         }
@@ -158,13 +159,13 @@ public class HiveScribeImpl implements HiveHistory {
     } catch (Exception e) {
       LOG.warn(org.apache.hadoop.util.StringUtils.stringifyException(e));
     }
-    if (sb1.length() > 0) {
-      taskInfoMap.get(id).hm.put(HiveHistory.Keys.ROWS_INSERTED.name(), sb1.toString());
-      queryInfoMap.get(queryId).hm.put(HiveHistory.Keys.ROWS_INSERTED.name(), sb1
+    if (stringBuilder1.length() > 0) {
+      taskInfoMap.get(id).hm.put(HiveHistory.Keys.ROWS_INSERTED.name(), stringBuilder1.toString());
+      queryInfoMap.get(queryId).hm.put(HiveHistory.Keys.ROWS_INSERTED.name(), stringBuilder1
           .toString());
     }
-    if (sb.length() > 0) {
-      taskInfoMap.get(id).hm.put(HiveHistory.Keys.TASK_COUNTERS.name(), sb.toString());
+    if (stringBuilder.length() > 0) {
+      taskInfoMap.get(id).hm.put(HiveHistory.Keys.TASK_COUNTERS.name(), stringBuilder.toString());
     }
   }
 
@@ -192,6 +193,20 @@ public class HiveScribeImpl implements HiveHistory {
     taskInfo.hm.put(HiveHistory.Keys.TASK_NAME.name(), taskName);
     String id = queryId + ":" + task.getId();
     taskInfoMap.put(id, taskInfo);
+
+    QueryStats stats = queryStatsMap.get(queryId);
+    snapshotTaskProgress(stats, taskInfo.hm);
+  }
+
+  public void snapshotTaskProgress(QueryStats stats, Map<String, String> taskStats){
+    for (Map.Entry<String, String> ent : taskStats.entrySet()) {
+      String key = ent.getKey();
+      String val = ent.getValue();
+      if(val != null) {
+        val = val.replace(System.getProperty("line.separator"), " ");
+      }
+      stats.taskProgress.put(Long.toString(System.currentTimeMillis()), key + "=\"" + val + "\"");
+    }
   }
 
   @Override
@@ -201,12 +216,20 @@ public class HiveScribeImpl implements HiveHistory {
     if (taskInfo == null) {
       return;
     }
+    QueryStats stats = queryStatsMap.get(queryId);
+    snapshotTaskProgress(stats, taskInfo.hm);
     taskInfoMap.remove(id);
   }
 
   @Override
   public void progressTask(String queryId, Task<? extends Serializable> task) {
-    return;
+    String id = queryId + ":" + task.getId();
+    TaskInfo taskInfo = taskInfoMap.get(id);
+    if (taskInfo == null) {
+      return;
+    }
+    QueryStats stats = queryStatsMap.get(queryId);
+    snapshotTaskProgress(stats, taskInfo.hm);
   }
 
   /**
@@ -222,10 +245,17 @@ public class HiveScribeImpl implements HiveHistory {
 
   @Override
   public void logPlanProgress(QueryPlan plan) throws IOException {
-    if (plan != null) {
-      Map<String,String> ctrmap = ctrMapFactory.get();
-      ctrmap.put("plan", plan.toString());
+    if (plan == null) {
+      return;
     }
+    Map<String,String> ctrmap = ctrMapFactory.get();
+    ctrmap.put("plan", plan.toString());
+
+    String queryId = plan.getQueryId();
+    String id = queryId + ":" + plan.getFetchTask().getId();
+
+    QueryStats stats = queryStatsMap.get(queryId);
+    stats.plansInfo.put(Long.toString(System.currentTimeMillis()), plan);
   }
 
   @Override
