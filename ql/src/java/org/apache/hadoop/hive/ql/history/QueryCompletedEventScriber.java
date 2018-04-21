@@ -96,7 +96,7 @@ public class QueryCompletedEventScriber {
     return thriftEvent;
   }
 
-  public static void setPlansInfo(Map<String, PlanInfo> thriftPlansInfo, Map<String, QueryPlan> plansInfo) {
+  private static void setPlansInfo(Map<String, PlanInfo> thriftPlansInfo, Map<String, QueryPlan> plansInfo) {
     // stage/task/counter info from runtime
     if (plansInfo == null) {
       return;
@@ -130,7 +130,7 @@ public class QueryCompletedEventScriber {
     }
   }
 
-  public static void setStageGraph(GraphInfo thriftStageGraph, Graph stageGraph) {
+  private static void setStageGraph(GraphInfo thriftStageGraph, Graph stageGraph) {
     if (stageGraph == null) {
       return;
     }
@@ -155,7 +155,7 @@ public class QueryCompletedEventScriber {
     }
   }
 
-  public static void setMapReduceStats(Map<String, QueryStageInfo> thriftMapReduceInfo, Map<String, MapRedStats> mapReduceInfo) {
+  private static void setMapReduceStats(Map<String, QueryStageInfo> thriftMapReduceInfo, Map<String, MapRedStats> mapReduceInfo) {
     if (mapReduceInfo == null) {
       return;
     }
@@ -173,7 +173,7 @@ public class QueryCompletedEventScriber {
     }
   }
 
-  public static void setStageList (List<StageInfo> thriftStageList, List<Stage> stageList) {
+  private static void setStageList (List<StageInfo> thriftStageList, List<Stage> stageList) {
     if (stageList == null) {
       return;
     }
@@ -197,7 +197,7 @@ public class QueryCompletedEventScriber {
     }
   }
 
-  public static void setTaskList(List<TaskInfo> thriftTaskList, List<Task> taskList) {
+  private static void setTaskList(List<TaskInfo> thriftTaskList, List<Task> taskList) {
     if (taskList == null) {
       return;
     }
@@ -245,7 +245,7 @@ public class QueryCompletedEventScriber {
       thriftConfigs.put(key, val);
     }
   }
-  public static void setOperatorGraph(GraphInfo thriftOperatorGraph, Graph operatorGraph) {
+  private static void setOperatorGraph(GraphInfo thriftOperatorGraph, Graph operatorGraph) {
     if (operatorGraph == null) {
       return;
     }
@@ -256,7 +256,7 @@ public class QueryCompletedEventScriber {
     setAdjacencyList(thriftOperatorGraph.adjacencyList, operatorGraph.getAdjacencyList());
   }
 
-  public static void setAdjacencyList(List<AdjacencyInfo>thriftAdjacencyList, List<Adjacency> adjacencyList) {
+  private static void setAdjacencyList(List<AdjacencyInfo>thriftAdjacencyList, List<Adjacency> adjacencyList) {
     if (adjacencyList == null) {
       return;
     }
@@ -269,7 +269,7 @@ public class QueryCompletedEventScriber {
     }
   }
 
-  public static void setOperatorList(List<OperatorInfo> thriftOperatorList, List<Operator> operatorList) {
+  private static void setOperatorList(List<OperatorInfo> thriftOperatorList, List<Operator> operatorList) {
     if (operatorList == null) {
       return;
     }

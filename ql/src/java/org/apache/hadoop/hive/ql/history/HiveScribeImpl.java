@@ -49,7 +49,7 @@ public class HiveScribeImpl implements HiveHistory {
     return "HiveQueryCompeletionScribe";
   }
 
-  void createNewQueryMetricEntry (Map<String, String> eventStats) {
+  private void createNewQueryMetricEntry (Map<String, String> eventStats) {
     String QueryID = eventStats.get("QUERY_ID");
     QueryStats newQueryStats;
     newQueryStats = new QueryStats(QueryID, eventStats.get("QUERY_STRING"), System.currentTimeMillis(), 0);
@@ -58,7 +58,7 @@ public class HiveScribeImpl implements HiveHistory {
     this.queryStatsMap.put(QueryID, newQueryStats);
   }
 
-  void scribeQueryMetricEntry (Map<String, String> eventStats) {
+  private void scribeQueryMetricEntry (Map<String, String> eventStats) {
     String QueryID = eventStats.get("QUERY_ID");
     QueryStats stats = this.queryStatsMap.get(QueryID);
     stats.queryEnd = System.currentTimeMillis();
