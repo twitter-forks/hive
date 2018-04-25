@@ -69,7 +69,6 @@ public class QueryCompletedEventScriber {
 
   private static HiveQueryCompletionEvent toThriftQueryCompletionEvent(QueryStats event) {
     HiveQueryCompletionEvent thriftEvent = new com.twitter.hive.thriftjava.HiveQueryCompletionEvent();
-
     thriftEvent.queryId = event.getQueryID();
     thriftEvent.queryString = event.getQueryString();
     thriftEvent.startTime = event.getQueryStart();

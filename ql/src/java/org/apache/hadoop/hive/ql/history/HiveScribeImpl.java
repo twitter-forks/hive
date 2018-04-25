@@ -74,12 +74,9 @@ public class HiveScribeImpl implements HiveHistory {
       return;
     }
 
-    String QueryID = HiveHistory.Keys.QUERY_ID.name();
-    String QueryString = HiveHistory.Keys.QUERY_STRING.name();
     HiveHistory.QueryInfo queryInfo = new HiveHistory.QueryInfo();
-
-    queryInfo.hm.put(QueryID, id);
-    queryInfo.hm.put(QueryString, cmd);
+    queryInfo.hm.put(Keys.QUERY_ID.name(), id);
+    queryInfo.hm.put(Keys.QUERY_STRING.name(), cmd);
     queryInfoMap.put(id, queryInfo);
 
     QueryStats newQueryStats = createNewQueryMetricEntry(queryInfo.hm, timeStamp);
