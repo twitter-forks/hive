@@ -257,7 +257,16 @@ public class HiveScribeImpl implements HiveHistory {
       snapshot.append(" ");
       snapshot.append(key + "=\"" + val + "\"");
     }
-    stats.getTaskProgress().put(timeStamp, snapshot.toString());
+    insertTaskProgress(stats.getTaskProgress(), timeStamp, snapshot.toString());
+  }
+
+  private void insertTaskProgress(Map<String, String> taskProgressStats, String timeStamp, String taskProgress) {
+    for (Map.Entry<String, String> ent : taskProgressStats.entrySet()) {
+      if (taskProgress.equals(ent.getValue())) {
+        return;
+      }
+    }
+    taskProgressStats.put(timeStamp, taskProgress);
   }
 
   @Override
@@ -269,7 +278,16 @@ public class HiveScribeImpl implements HiveHistory {
 
     String queryId = plan.getQueryId();
     QueryStats stats = queryStatsMap.get(queryId);
-    stats.getPlansInfo().put(timeStamp, plan);
+    insertPlan(stats.getPlansInfo(), timeStamp, plan);
+  }
+
+  private void insertPlan(Map<String, QueryPlan> plansInfo, String timeStamp, QueryPlan plan) {
+    for (Map.Entry<String, QueryPlan> ent : plansInfo.entrySet()) {
+      if (plan.toString().equals(ent.getValue().toString())) {
+        return;
+      }
+    }
+    plansInfo.put(timeStamp, plan);
   }
 
   @Override
