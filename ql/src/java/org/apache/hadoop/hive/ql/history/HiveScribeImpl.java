@@ -39,7 +39,7 @@ public class HiveScribeImpl implements HiveHistory {
    * @param sessionState
    */
   public HiveScribeImpl(SessionState sessionState) {
-    LOG.info("Instantiated an instance for HiveScribeImpl to scribe query logs. \n");
+    LOG.info("Instantiated an instance for HiveScribeImpl to scribe query logs.");
   }
 
   /**
