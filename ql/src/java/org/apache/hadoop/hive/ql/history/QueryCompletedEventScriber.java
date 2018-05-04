@@ -43,6 +43,7 @@ import com.twitter.hive.thriftjava.PlanInfo;
 import com.twitter.hive.thriftjava.QueryStageInfo;
 import com.twitter.hive.thriftjava.StageInfo;
 import com.twitter.hive.thriftjava.TaskInfo;
+import com.twitter.hive.thriftjava.ProgressInfo;
 
 /**
  * Class that scribes query completion events
@@ -78,11 +79,11 @@ public class QueryCompletedEventScriber {
     thriftEvent.sessionId = event.getSessionID();
     thriftEvent.database = event.getDatabase();
     thriftEvent.plansInfo = new HashMap<String, PlanInfo>();
-    thriftEvent.taskProgress = new HashMap<String, String>();
+    thriftEvent.taskProgress = new ArrayList<ProgressInfo>();
     thriftEvent.mapReduceInfo = new HashMap<String, QueryStageInfo>();
 
     setPlansInfo(thriftEvent.plansInfo, event.getPlansInfo());
-    setMapValForString(thriftEvent.taskProgress, event.getTaskProgress());
+    setTaskProgress(thriftEvent.taskProgress, event.getTaskProgress());
     setMapReduceStats(thriftEvent.mapReduceInfo, event.getMapReduceStats());
 
     return thriftEvent;
@@ -216,6 +217,18 @@ public class QueryCompletedEventScriber {
     }
   }
 
+  public static void setTaskProgress(List<ProgressInfo> thriftTaskProgress, ArrayList<QueryStats.progressSnapshot> taskProgress) {
+    if (taskProgress == null) {
+      return;
+    }
+    for (int i = 0; i < taskProgress.size(); i++) {
+      ProgressInfo thriftProgressInfo = new com.twitter.hive.thriftjava.ProgressInfo();
+      thriftProgressInfo.timeStamp = taskProgress.get(i).getTimeStamp();
+      thriftProgressInfo.value = taskProgress.get(i).getValue();
+      thriftTaskProgress.add(thriftProgressInfo);
+    }
+  }
+
   public static void setMapValForString(Map<String, String> thriftConfigs, Map<String, String> configs) {
     if (configs == null) {
       return;
@@ -237,6 +250,7 @@ public class QueryCompletedEventScriber {
       thriftConfigs.put(key, val);
     }
   }
+
   private static void setOperatorGraph(GraphInfo thriftOperatorGraph, Graph operatorGraph) {
     if (operatorGraph == null) {
       return;

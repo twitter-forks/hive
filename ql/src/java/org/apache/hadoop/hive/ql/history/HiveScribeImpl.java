@@ -2,6 +2,7 @@ package org.apache.hadoop.hive.ql.history;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -207,7 +208,7 @@ public class HiveScribeImpl implements HiveHistory {
 
   @Override
   public void startTask(String queryId, Task<? extends Serializable> task, String taskName) {
-    String timeStamp = Long.toString(System.currentTimeMillis());
+    Long timeStamp = System.currentTimeMillis();
     HiveHistory.TaskInfo taskInfo = new HiveHistory.TaskInfo();
     taskInfo.hm.put(HiveHistory.Keys.QUERY_ID.name(), queryId);
     taskInfo.hm.put(HiveHistory.Keys.TASK_ID.name(), task.getId());
@@ -220,7 +221,7 @@ public class HiveScribeImpl implements HiveHistory {
 
   @Override
   public void endTask(String queryId, Task<? extends Serializable> task) {
-    String timeStamp = Long.toString(System.currentTimeMillis());
+    Long timeStamp = System.currentTimeMillis();
     String id = queryId + ":" + task.getId();
     HiveHistory.TaskInfo taskInfo = taskInfoMap.get(id);
     if (taskInfo == null) {
@@ -234,7 +235,7 @@ public class HiveScribeImpl implements HiveHistory {
 
   @Override
   public void progressTask(String queryId, Task<? extends Serializable> task) {
-    String timeStamp = Long.toString(System.currentTimeMillis());
+    Long timeStamp = System.currentTimeMillis();
     String id = queryId + ":" + task.getId();
     TaskInfo taskInfo = taskInfoMap.get(id);
     if (taskInfo == null) {
@@ -245,7 +246,7 @@ public class HiveScribeImpl implements HiveHistory {
     snapshotTaskProgress(RecordTypes.TaskProgress, stats, taskInfo.hm, timeStamp);
   }
 
-  public void snapshotTaskProgress(RecordTypes recordTypes, QueryStats stats, Map<String, String> taskStats, String timeStamp){
+  public void snapshotTaskProgress(RecordTypes recordTypes, QueryStats stats, Map<String, String> taskStats, Long timeStamp){
     StringBuilder snapshot = new StringBuilder("");
     snapshot.append(recordTypes.name());
     for (Map.Entry<String, String> ent : taskStats.entrySet()) {
@@ -260,13 +261,16 @@ public class HiveScribeImpl implements HiveHistory {
     insertTaskProgress(stats.getTaskProgress(), timeStamp, snapshot.toString());
   }
 
-  private void insertTaskProgress(Map<String, String> taskProgressStats, String timeStamp, String taskProgress) {
-    for (Map.Entry<String, String> ent : taskProgressStats.entrySet()) {
-      if (taskProgress.equals(ent.getValue())) {
-        return;
-      }
+  private void insertTaskProgress(ArrayList<QueryStats.progressSnapshot> taskProgressStats, Long timeStamp, String taskProgress) {
+    int listSize = taskProgressStats.size();
+    if ( listSize == 0 || taskProgress.equals(taskProgressStats.get(listSize - 1).getValue())) {
+      return;
     }
-    taskProgressStats.put(timeStamp, taskProgress);
+
+    QueryStats.progressSnapshot newSnapshot = new QueryStats.progressSnapshot();
+    newSnapshot.setTimeStamp(timeStamp);
+    newSnapshot.setValue(taskProgress);
+    taskProgressStats.add(newSnapshot);
   }
 
   @Override

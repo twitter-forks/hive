@@ -1,5 +1,6 @@
 package org.apache.hadoop.hive.ql;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,16 +19,42 @@ public class QueryStats {
   private String database;
   private String mapReduceStatsDesc;
   private String currentTimeStamp;
-  private Map<String, String> taskProgress;
+  private ArrayList<progressSnapshot> taskProgress;
   private Map<String, QueryPlan> plansInfo;
   private Map<String, MapRedStats> mapReduceStats;
 
-  public QueryStats(String queryID, String queryString, long start) {
+  public static class progressSnapshot {
+    private long timeStamp;
+    private String value;
+
+    public void progressSnapshot(long timeStamp, String value) {
+      this.timeStamp = timeStamp;
+      this.value = value;
+    }
+
+    public long getTimeStamp() {
+      return timeStamp;
+    }
+
+    public void setTimeStamp(long timeStamp) {
+      this.timeStamp = timeStamp;
+    }
+
+    public String getValue() {
+      return value;
+    }
+
+    public void setValue(String value) {
+      this.value = value;
+    }
+  }
+
+  public QueryStats (String queryID, String queryString, long start) {
     this.queryID = queryID;
     this.queryString = queryString;
     this.queryStart = start;
     this.queryEnd = -1;
-    this.taskProgress = new HashMap<>();
+    this.taskProgress = new ArrayList<>();
     this.plansInfo = new HashMap<>();
     this.mapReduceStats = new HashMap<>();
   };
@@ -112,7 +139,7 @@ public class QueryStats {
     return this.currentTimeStamp;
   }
 
-  public Map<String, String> getTaskProgress () {
+  public ArrayList<progressSnapshot> getTaskProgress () {
     return this.taskProgress;
   }
 
