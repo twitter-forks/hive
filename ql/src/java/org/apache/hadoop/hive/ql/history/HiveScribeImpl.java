@@ -25,7 +25,7 @@ public class HiveScribeImpl implements HiveHistory {
   private final HashMap<String, QueryInfo> queryInfoMap = new HashMap<>();
 
   // Task Hash Map
-  private final HashMap<String, TaskInfo> taskInfoMap = new HashMap<String, TaskInfo>();
+  private final HashMap<String, TaskInfo> taskInfoMap = new HashMap<>();
 
   private static final String ROW_COUNT_PATTERN = "RECORDS_OUT_(\\d+)(_)*(\\S+)*";
 
@@ -168,7 +168,6 @@ public class HiveScribeImpl implements HiveHistory {
 
   @Override
   public void printRowCount(String queryId) {
-    return;
   }
 
   private void addSessionInfo(String queryId) {
@@ -240,7 +239,7 @@ public class HiveScribeImpl implements HiveHistory {
     snapshotTaskProgress(RecordTypes.TaskProgress, stats, taskInfo.hm, timeStamp);
   }
 
-  public void snapshotTaskProgress(RecordTypes recordTypes, QueryStats stats, Map<String, String> taskStats, Long timeStamp) {
+  private void snapshotTaskProgress(RecordTypes recordTypes, QueryStats stats, Map<String, String> taskStats, Long timeStamp) {
     StringBuilder snapshot = new StringBuilder("");
     snapshot.append(recordTypes.name());
     for (Map.Entry<String, String> ent : taskStats.entrySet()) {
@@ -257,9 +256,11 @@ public class HiveScribeImpl implements HiveHistory {
 
   private void insertTaskProgress(ArrayList<QueryStats.progressSnapshot> taskProgressStats, Long timeStamp, String taskProgress) {
     int listSize = taskProgressStats.size();
-    String lastProgress = taskProgressStats.get(listSize - 1).getProgress();
-    if (listSize > 0 && taskProgress.equals(lastProgress)) {
-      return;
+    if (listSize > 0) {
+      String lastProgress = taskProgressStats.get(listSize - 1).getProgress();
+      if (taskProgress.equals(lastProgress)) {
+        return;
+      }
     }
     QueryStats.progressSnapshot newSnapshot = new QueryStats.progressSnapshot();
     newSnapshot.setTimeStamp(timeStamp);
@@ -298,7 +299,7 @@ public class HiveScribeImpl implements HiveHistory {
    *
    * @return tableName
    */
-  String getRowCountTableName(String name) {
+  private String getRowCountTableName(String name) {
     if (idToTableMap == null) {
       return null;
     }
