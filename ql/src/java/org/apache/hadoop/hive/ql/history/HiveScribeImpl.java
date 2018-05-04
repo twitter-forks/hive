@@ -36,8 +36,6 @@ public class HiveScribeImpl implements HiveHistory {
 
   /**
    * Construct HiveScribeImpl object and scribe query metric to log pipeline.
-   *
-   * @param sessionState
    */
   public HiveScribeImpl(SessionState sessionState) {
     LOG.info("Instantiated an instance for HiveScribeImpl to scribe query logs.");
@@ -53,10 +51,8 @@ public class HiveScribeImpl implements HiveHistory {
 
   /**
    * Call TwitterScriber to scribe hive query statistics to log pipeline
-   *
-   * @param queryID
    */
-  private void scribeQueryMetricEntry (String queryID) {
+  private void scribeQueryMetricEntry(String queryID) {
     QueryStats stats = queryStatsMap.get(queryID);
     if (stats == null) {
       LOG.info("Stats is null. Nothing passed to log pipeline");
@@ -92,11 +88,10 @@ public class HiveScribeImpl implements HiveHistory {
    *
    * @return QueryStats
    */
-  private QueryStats createNewQueryMetricEntry (Map<String, String> eventStats, Long timeStamp) {
+  private QueryStats createNewQueryMetricEntry(Map<String, String> eventStats, Long timeStamp) {
     String QueryID = eventStats.get(Keys.QUERY_ID.name());
     String QueryString = eventStats.get(Keys.QUERY_STRING.name());
-    QueryStats newQueryStats = new QueryStats(QueryID, QueryString, timeStamp);
-    return newQueryStats;
+    return new QueryStats(QueryID, QueryString, timeStamp);
   }
 
   @Override
@@ -172,7 +167,7 @@ public class HiveScribeImpl implements HiveHistory {
   }
 
   @Override
-  public void printRowCount (String queryId) {
+  public void printRowCount(String queryId) {
     return;
   }
 
@@ -195,9 +190,8 @@ public class HiveScribeImpl implements HiveHistory {
   }
 
   @Override
-  public void endQuery (String queryId) {
+  public void endQuery(String queryId) {
     Long timeStamp = System.currentTimeMillis();
-    HiveHistory.QueryInfo queryInfo = queryInfoMap.get(queryId);
     QueryStats stats = queryStatsMap.get(queryId);
     stats.setQueryEnd(timeStamp);
     addSessionInfo(queryId);
@@ -246,13 +240,13 @@ public class HiveScribeImpl implements HiveHistory {
     snapshotTaskProgress(RecordTypes.TaskProgress, stats, taskInfo.hm, timeStamp);
   }
 
-  public void snapshotTaskProgress(RecordTypes recordTypes, QueryStats stats, Map<String, String> taskStats, Long timeStamp){
+  public void snapshotTaskProgress(RecordTypes recordTypes, QueryStats stats, Map<String, String> taskStats, Long timeStamp) {
     StringBuilder snapshot = new StringBuilder("");
     snapshot.append(recordTypes.name());
     for (Map.Entry<String, String> ent : taskStats.entrySet()) {
       String key = ent.getKey();
       String val = ent.getValue();
-      if(val != null) {
+      if (val != null) {
         val = val.replace(System.getProperty("line.separator"), " ");
       }
       snapshot.append(" ");
@@ -263,13 +257,13 @@ public class HiveScribeImpl implements HiveHistory {
 
   private void insertTaskProgress(ArrayList<QueryStats.progressSnapshot> taskProgressStats, Long timeStamp, String taskProgress) {
     int listSize = taskProgressStats.size();
-    if ( listSize == 0 || taskProgress.equals(taskProgressStats.get(listSize - 1).getValue())) {
+    String lastProgress = taskProgressStats.get(listSize - 1).getProgress();
+    if (listSize > 0 && taskProgress.equals(lastProgress)) {
       return;
     }
-
     QueryStats.progressSnapshot newSnapshot = new QueryStats.progressSnapshot();
     newSnapshot.setTimeStamp(timeStamp);
-    newSnapshot.setValue(taskProgress);
+    newSnapshot.setProgress(taskProgress);
     taskProgressStats.add(newSnapshot);
   }
 
@@ -302,7 +296,6 @@ public class HiveScribeImpl implements HiveHistory {
   /**
    * Returns table name for the counter name.
    *
-   * @param name
    * @return tableName
    */
   String getRowCountTableName(String name) {
@@ -324,7 +317,6 @@ public class HiveScribeImpl implements HiveHistory {
 
   @Override
   public void closeStream() {
-    return;
   }
 
   @Override

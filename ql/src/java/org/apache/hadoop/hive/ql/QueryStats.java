@@ -6,7 +6,6 @@ import java.util.Map;
 
 /**
  * QueryStats.
- *
  */
 public class QueryStats {
   private long queryStart;
@@ -25,12 +24,7 @@ public class QueryStats {
 
   public static class progressSnapshot {
     private long timeStamp;
-    private String value;
-
-    public void progressSnapshot(long timeStamp, String value) {
-      this.timeStamp = timeStamp;
-      this.value = value;
-    }
+    private String progress;
 
     public long getTimeStamp() {
       return timeStamp;
@@ -40,16 +34,16 @@ public class QueryStats {
       this.timeStamp = timeStamp;
     }
 
-    public String getValue() {
-      return value;
+    public String getProgress() {
+      return progress;
     }
 
-    public void setValue(String value) {
-      this.value = value;
+    public void setProgress(String progress) {
+      this.progress = progress;
     }
   }
 
-  public QueryStats (String queryID, String queryString, long start) {
+  public QueryStats(String queryID, String queryString, long start) {
     this.queryID = queryID;
     this.queryString = queryString;
     this.queryStart = start;
@@ -57,101 +51,101 @@ public class QueryStats {
     this.taskProgress = new ArrayList<>();
     this.plansInfo = new HashMap<>();
     this.mapReduceStats = new HashMap<>();
-  };
+  }
 
-  public void setQueryStart (Long timeStamp) {
+  public void setQueryStart(Long timeStamp) {
     this.queryStart = timeStamp;
   }
 
-  public Long getQueryStart () {
+  public Long getQueryStart() {
     return this.queryStart;
   }
 
-  public void setQueryEnd (Long timeStamp) {
+  public void setQueryEnd(Long timeStamp) {
     this.queryEnd = timeStamp;
   }
 
-  public Long getQueryEnd () {
+  public Long getQueryEnd() {
     return this.queryEnd;
   }
 
-  public void setQueryID (String queryID) {
+  public void setQueryID(String queryID) {
     this.queryID = queryID;
   }
 
-  public String getQueryID () {
+  public String getQueryID() {
     return this.queryID;
   }
 
-  public void setQueryString (String queryString) {
+  public void setQueryString(String queryString) {
     this.queryString = queryString;
   }
 
-  public String getQueryString () {
+  public String getQueryString() {
     return this.queryString;
   }
 
-  public void setSessionID (String sessionID) {
+  public void setSessionID(String sessionID) {
     this.sessionID = sessionID;
   }
 
-  public String getSessionID () {
+  public String getSessionID() {
     return this.sessionID;
   }
 
-  public void setIPAddress (String IPAddress) {
+  public void setIPAddress(String IPAddress) {
     this.IPAddress = IPAddress;
   }
 
-  public String getIPAddress () {
+  public String getIPAddress() {
     return this.IPAddress;
   }
 
-  public void setUsername (String username) {
+  public void setUsername(String username) {
     this.username = username;
   }
 
-  public String getUsername () {
+  public String getUsername() {
     return this.username;
   }
 
-  public void setDatabase (String database) {
+  public void setDatabase(String database) {
     this.database = database;
   }
 
-  public String getDatabase () {
+  public String getDatabase() {
     return this.database;
   }
 
-  public void setMapReduceStatsDesc (String MapReduceStatsDesc) {
+  public void setMapReduceStatsDesc(String MapReduceStatsDesc) {
     this.mapReduceStatsDesc = MapReduceStatsDesc;
   }
 
-  public String getMapReduceStatsDesc () {
+  public String getMapReduceStatsDesc() {
     return this.mapReduceStatsDesc;
   }
 
-  public void setCurrentTimeStamp (String currentTimeStamp) {
+  public void setCurrentTimeStamp(String currentTimeStamp) {
     this.currentTimeStamp = currentTimeStamp;
   }
 
-  public String getCurrentTimeStamp () {
+  public String getCurrentTimeStamp() {
     return this.currentTimeStamp;
   }
 
-  public ArrayList<progressSnapshot> getTaskProgress () {
+  public ArrayList<progressSnapshot> getTaskProgress() {
     return this.taskProgress;
   }
 
-  public Map<String, QueryPlan> getPlansInfo () {
+  public Map<String, QueryPlan> getPlansInfo() {
     return this.plansInfo;
   }
 
-  public Map<String, MapRedStats> getMapReduceStats () {
+  public Map<String, MapRedStats> getMapReduceStats() {
     return this.mapReduceStats;
   }
 
-  public void setMapReduceStats (Map<String, MapRedStats> mapReduceStats) {
+  public void setMapReduceStats(Map<String, MapRedStats> mapReduceStats) {
     for (Map.Entry<String, MapRedStats> ent : mapReduceStats.entrySet()) {
       this.mapReduceStats.put(ent.getKey(), ent.getValue());
     }
