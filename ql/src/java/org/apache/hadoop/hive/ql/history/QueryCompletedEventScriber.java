@@ -166,22 +166,22 @@ public class QueryCompletedEventScriber {
     if (stageList == null) {
       return;
     }
-    for (Stage aStageList : stageList) {
+    for (Stage aStage : stageList) {
       StageInfo stageEnt = new StageInfo();
-      stageEnt.stageId = aStageList.getStageId();
-      stageEnt.stageType = aStageList.getStageType().toString();
+      stageEnt.stageId = aStage.getStageId();
+      stageEnt.stageType = aStage.getStageType().toString();
 
       stageEnt.stageAttributes = new HashMap<String, String>();
-      setMapValForString(stageEnt.stageAttributes, aStageList.getStageAttributes());
+      setMapValForString(stageEnt.stageAttributes, aStage.getStageAttributes());
 
       stageEnt.stageCounters = new HashMap<String, Long>();
-      setMapValForLong(stageEnt.stageCounters, aStageList.getStageCounters());
+      setMapValForLong(stageEnt.stageCounters, aStage.getStageCounters());
 
       stageEnt.taskList = new ArrayList<TaskInfo>();
-      setTaskList(stageEnt.taskList, aStageList.getTaskList());
+      setTaskList(stageEnt.taskList, aStage.getTaskList());
 
-      stageEnt.done = aStageList.isDone();
-      stageEnt.started = aStageList.isStarted();
+      stageEnt.done = aStage.isDone();
+      stageEnt.started = aStage.isStarted();
       thriftStageList.add(stageEnt);
     }
   }
@@ -190,24 +190,24 @@ public class QueryCompletedEventScriber {
     if (taskList == null) {
       return;
     }
-    for (Task aTaskList : taskList) {
+    for (Task aTask : taskList) {
       TaskInfo thriftTaskListEnt = new TaskInfo();
-      thriftTaskListEnt.taskId = aTaskList.getTaskId();
-      thriftTaskListEnt.taskType = aTaskList.getTaskType().toString();
-      thriftTaskListEnt.done = aTaskList.isDone();
-      thriftTaskListEnt.started = aTaskList.isStarted();
+      thriftTaskListEnt.taskId = aTask.getTaskId();
+      thriftTaskListEnt.taskType = aTask.getTaskType().toString();
+      thriftTaskListEnt.done = aTask.isDone();
+      thriftTaskListEnt.started = aTask.isStarted();
 
       thriftTaskListEnt.taskAttributes = new HashMap<String, String>();
-      setMapValForString(thriftTaskListEnt.taskAttributes, aTaskList.getTaskAttributes());
+      setMapValForString(thriftTaskListEnt.taskAttributes, aTask.getTaskAttributes());
 
       thriftTaskListEnt.taskCounters = new HashMap<String, Long>();
-      setMapValForLong(thriftTaskListEnt.taskCounters, aTaskList.getTaskCounters());
+      setMapValForLong(thriftTaskListEnt.taskCounters, aTask.getTaskCounters());
 
       thriftTaskListEnt.operatorGraph = new GraphInfo();
-      setOperatorGraph(thriftTaskListEnt.operatorGraph, aTaskList.getOperatorGraph());
+      setOperatorGraph(thriftTaskListEnt.operatorGraph, aTask.getOperatorGraph());
 
       thriftTaskListEnt.operatorList = new ArrayList<OperatorInfo>();
-      setOperatorList(thriftTaskListEnt.operatorList, aTaskList.getOperatorList());
+      setOperatorList(thriftTaskListEnt.operatorList, aTask.getOperatorList());
 
       thriftTaskList.add(thriftTaskListEnt);
     }
@@ -217,10 +217,10 @@ public class QueryCompletedEventScriber {
     if (taskProgress == null) {
       return;
     }
-    for (QueryStats.progressSnapshot taskProgres : taskProgress) {
+    for (QueryStats.progressSnapshot progress : taskProgress) {
       ProgressInfo thriftProgressInfo = new ProgressInfo();
-      thriftProgressInfo.timeStamp = taskProgres.getTimeStamp();
-      thriftProgressInfo.value = taskProgres.getProgress();
+      thriftProgressInfo.timeStamp = progress.getTimeStamp();
+      thriftProgressInfo.value = progress.getProgress();
       thriftTaskProgress.add(thriftProgressInfo);
     }
   }
@@ -264,11 +264,11 @@ public class QueryCompletedEventScriber {
     if (adjacencyList == null) {
       return;
     }
-    for (Adjacency anAdjacencyList : adjacencyList) {
+    for (Adjacency anAdjacency : adjacencyList) {
       AdjacencyInfo adjacencyInfo = new AdjacencyInfo();
-      adjacencyInfo.node = anAdjacencyList.getNode();
-      adjacencyInfo.children = anAdjacencyList.getChildren();
-      adjacencyInfo.adjacencyType = anAdjacencyList.getAdjacencyType().toString();
+      adjacencyInfo.node = anAdjacency.getNode();
+      adjacencyInfo.children = anAdjacency.getChildren();
+      adjacencyInfo.adjacencyType = anAdjacency.getAdjacencyType().toString();
       thriftAdjacencyList.add(adjacencyInfo);
     }
   }
@@ -277,16 +277,16 @@ public class QueryCompletedEventScriber {
     if (operatorList == null) {
       return;
     }
-    for (Operator anOperatorList : operatorList) {
+    for (Operator anOperator : operatorList) {
       OperatorInfo operatorInfo = new OperatorInfo();
-      operatorInfo.operatorId = anOperatorList.getOperatorId();
-      operatorInfo.operatorType = anOperatorList.getOperatorType().toString();
-      operatorInfo.done = anOperatorList.isDone();
-      operatorInfo.started = anOperatorList.isStarted();
+      operatorInfo.operatorId = anOperator.getOperatorId();
+      operatorInfo.operatorType = anOperator.getOperatorType().toString();
+      operatorInfo.done = anOperator.isDone();
+      operatorInfo.started = anOperator.isStarted();
       operatorInfo.operatorAttributes = new HashMap<String, String>();
-      setMapValForString(operatorInfo.operatorAttributes, anOperatorList.getOperatorAttributes());
+      setMapValForString(operatorInfo.operatorAttributes, anOperator.getOperatorAttributes());
       operatorInfo.operatorCounters = new HashMap<String, Long>();
-      setMapValForLong(operatorInfo.operatorCounters, anOperatorList.getOperatorCounters());
+      setMapValForLong(operatorInfo.operatorCounters, anOperator.getOperatorCounters());
       thriftOperatorList.add(operatorInfo);
     }
   }
