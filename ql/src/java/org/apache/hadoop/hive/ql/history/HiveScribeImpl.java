@@ -46,7 +46,7 @@ public class HiveScribeImpl implements HiveHistory {
    */
   @Override
   public String getHistFileName() {
-    return "HiveQueryCompeletionScribe";
+    return "HiveQueryCompletionScribe";
   }
 
   /**
@@ -71,9 +71,7 @@ public class HiveScribeImpl implements HiveHistory {
       return;
     }
 
-    HiveHistory.QueryInfo queryInfo = new HiveHistory.QueryInfo();
-    queryInfo.hm.put(Keys.QUERY_ID.name(), id);
-    queryInfo.hm.put(Keys.QUERY_STRING.name(), cmd);
+    HiveHistory.QueryInfo queryInfo = createNewQueryEventEntry(id, cmd);
     queryInfoMap.put(id, queryInfo);
 
     QueryStats newQueryStats = createNewQueryMetricEntry(queryInfo.hm, timeStamp);
@@ -83,6 +81,7 @@ public class HiveScribeImpl implements HiveHistory {
   /**
    * Create a QueryStats object for each query to store query info and runtime statistics.
    * Store query id and QueryStats as key-value pairs in queryStatsMap.
+   * (Note that queryStatsMap is different from queryInfoMap.)
    * Statistics for each query is updated as tasks and plans progress, and are passed to scriber
    * after each query is completed. Scribed entry will be removed from queryStatsMap in the end.
    *
@@ -92,6 +91,13 @@ public class HiveScribeImpl implements HiveHistory {
     String QueryID = eventStats.get(Keys.QUERY_ID.name());
     String QueryString = eventStats.get(Keys.QUERY_STRING.name());
     return new QueryStats(QueryID, QueryString, timeStamp);
+  }
+
+  private QueryInfo createNewQueryEventEntry(String queryId, String queryCommand) {
+    QueryInfo queryInfo = new HiveHistory.QueryInfo();
+    queryInfo.hm.put(Keys.QUERY_ID.name(), queryId);
+    queryInfo.hm.put(Keys.QUERY_STRING.name(), queryCommand);
+    return queryInfo;
   }
 
   @Override
@@ -173,18 +179,24 @@ public class HiveScribeImpl implements HiveHistory {
   private void addSessionInfo(String queryId) {
     QueryStats stats = queryStatsMap.get(queryId);
     SessionState sessionState = SessionState.get();
-
-    if (sessionState != null && sessionState.getUserName() != null
-        && sessionState.getUserIpAddress() != null && sessionState.getSessionId() != null) {
-      stats.setUsername(sessionState.getUserName());
-      stats.setIPAddress(sessionState.getUserIpAddress());
-      stats.setSessionID(sessionState.getSessionId());
-      stats.setDatabase(sessionState.getCurrentDatabase());
-      if (sessionState.getMapRedStats() != null) {
-        stats.setMapReduceStatsDesc(sessionState.getMapRedStats().toString());
-      }
-      stats.setCurrentTimeStamp(sessionState.getQueryCurrentTimestamp().toString());
-      stats.setMapReduceStats(sessionState.getMapRedStats());
+    if (sessionState == null) {
+      return;
+    }
+    String userName = sessionState.getUserName();
+    String ipAddress = sessionState.getUserIpAddress();
+    String sessionId = sessionState.getSessionId();
+    String currentDatabase = sessionState.getCurrentDatabase();
+    String currentTimeStamp = sessionState.getQueryCurrentTimestamp().toString();
+    assert (userName != null && ipAddress != null && sessionId != null && currentDatabase != null && currentTimeStamp != null)
+        : "Query information is incomplete.";
+    stats.setUsername(userName);
+    stats.setIPAddress(sessionState.getUserIpAddress());
+    stats.setSessionID(sessionState.getSessionId());
+    stats.setDatabase(sessionState.getCurrentDatabase());
+    stats.setCurrentTimeStamp(sessionState.getQueryCurrentTimestamp().toString());
+    stats.setMapReduceStats(sessionState.getMapRedStats());
+    if (sessionState.getMapRedStats() != null) {
+      stats.setMapReduceStatsDesc(sessionState.getMapRedStats().toString());
     }
   }
 
@@ -202,14 +214,19 @@ public class HiveScribeImpl implements HiveHistory {
   @Override
   public void startTask(String queryId, Task<? extends Serializable> task, String taskName) {
     Long timeStamp = System.currentTimeMillis();
-    HiveHistory.TaskInfo taskInfo = new HiveHistory.TaskInfo();
-    taskInfo.hm.put(HiveHistory.Keys.QUERY_ID.name(), queryId);
-    taskInfo.hm.put(HiveHistory.Keys.TASK_ID.name(), task.getId());
-    taskInfo.hm.put(HiveHistory.Keys.TASK_NAME.name(), taskName);
+    HiveHistory.TaskInfo taskInfo = createNewTaskEventEntry(queryId, task.getId(), taskName);
     String id = queryId + ":" + task.getId();
     taskInfoMap.put(id, taskInfo);
     QueryStats stats = queryStatsMap.get(queryId);
     snapshotTaskProgress(RecordTypes.TaskStart, stats, taskInfo.hm, timeStamp);
+  }
+
+  private TaskInfo createNewTaskEventEntry(String queryId, String taskId, String taskName) {
+    TaskInfo taskInfo = new HiveHistory.TaskInfo();
+    taskInfo.hm.put(HiveHistory.Keys.QUERY_ID.name(), queryId);
+    taskInfo.hm.put(HiveHistory.Keys.TASK_ID.name(), taskId);
+    taskInfo.hm.put(HiveHistory.Keys.TASK_NAME.name(), taskName);
+    return taskInfo;
   }
 
   @Override
@@ -220,7 +237,6 @@ public class HiveScribeImpl implements HiveHistory {
     if (taskInfo == null) {
       return;
     }
-
     QueryStats stats = queryStatsMap.get(queryId);
     snapshotTaskProgress(RecordTypes.TaskEnd, stats, taskInfo.hm, timeStamp);
     taskInfoMap.remove(id);
@@ -234,7 +250,6 @@ public class HiveScribeImpl implements HiveHistory {
     if (taskInfo == null) {
       return;
     }
-
     QueryStats stats = queryStatsMap.get(queryId);
     snapshotTaskProgress(RecordTypes.TaskProgress, stats, taskInfo.hm, timeStamp);
   }
@@ -270,23 +285,27 @@ public class HiveScribeImpl implements HiveHistory {
 
   @Override
   public void logPlanProgress(QueryPlan plan) throws IOException {
-    String timeStamp = Long.toString(System.currentTimeMillis());
+    long timeStamp = System.currentTimeMillis();
     if (plan == null) {
       return;
     }
-
     String queryId = plan.getQueryId();
     QueryStats stats = queryStatsMap.get(queryId);
     insertPlan(stats.getPlansInfo(), timeStamp, plan);
   }
 
-  private void insertPlan(Map<String, QueryPlan> plansInfo, String timeStamp, QueryPlan plan) {
-    for (Map.Entry<String, QueryPlan> ent : plansInfo.entrySet()) {
-      if (plan.toString().equals(ent.getValue().toString())) {
+  private void insertPlan(ArrayList<QueryStats.planSnapshot> plansInfo, long timeStamp, QueryPlan plan) {
+    int listSize = plansInfo.size();
+    if (listSize > 0) {
+      String lastProgress = plansInfo.get(listSize - 1).getQueryPlan().toString();
+      if (plan.toString().equals(lastProgress)) {
         return;
       }
     }
-    plansInfo.put(timeStamp, plan);
+    QueryStats.planSnapshot newSnapshot = new QueryStats.planSnapshot();
+    newSnapshot.setTimeStamp(timeStamp);
+    newSnapshot.setQueryPlan(plan);
+    plansInfo.add(newSnapshot);
   }
 
   @Override

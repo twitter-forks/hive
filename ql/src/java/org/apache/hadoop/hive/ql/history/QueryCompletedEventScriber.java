@@ -29,6 +29,7 @@ import java.util.Map;
 import org.apache.hadoop.hive.ql.MapRedStats;
 import org.apache.hadoop.hive.ql.QueryPlan;
 import org.apache.hadoop.hive.ql.QueryStats;
+import org.apache.hadoop.hive.ql.plan.PlanUtils;
 import org.apache.hadoop.hive.ql.plan.api.Adjacency;
 import org.apache.hadoop.hive.ql.plan.api.Graph;
 import org.apache.hadoop.hive.ql.plan.api.Operator;
@@ -47,6 +48,7 @@ import com.twitter.hive.thriftjava.QueryStageInfo;
 import com.twitter.hive.thriftjava.StageInfo;
 import com.twitter.hive.thriftjava.TaskInfo;
 import com.twitter.hive.thriftjava.ProgressInfo;
+import com.twitter.hive.thriftjava.PlanDetails;
 
 /**
  * Class that scribes query completion events
@@ -81,7 +83,7 @@ public class QueryCompletedEventScriber {
     thriftEvent.ip = event.getIPAddress();
     thriftEvent.sessionId = event.getSessionID();
     thriftEvent.database = event.getDatabase();
-    thriftEvent.plansInfo = new HashMap<String, PlanInfo>();
+    thriftEvent.plansInfo = new ArrayList<PlanInfo>();
     thriftEvent.taskProgress = new ArrayList<ProgressInfo>();
     thriftEvent.mapReduceInfo = new HashMap<String, QueryStageInfo>();
 
@@ -95,33 +97,37 @@ public class QueryCompletedEventScriber {
   /**
    * Update plansInfo for thrift object according to pre-defined schema
    */
-  private static void setPlansInfo(Map<String, PlanInfo> thriftPlansInfo, Map<String, QueryPlan> plansInfo) {
+  private static void setPlansInfo(List<PlanInfo> thriftPlansInfo, ArrayList<QueryStats.planSnapshot> plansInfo) {
     if (plansInfo == null) {
       return;
     }
-    for (Map.Entry<String, QueryPlan> ent : plansInfo.entrySet()) {
+    for (QueryStats.planSnapshot ent : plansInfo) {
       PlanInfo thriftPlanInfo = new PlanInfo();
-      String key = ent.getKey();
-      thriftPlanInfo.queryId = ent.getValue().getQueryId();
-
-      thriftPlanInfo.queryType = ent.getValue().getQuery().getQueryType();
-      thriftPlanInfo.done = ent.getValue().getDone().toString();
-      thriftPlanInfo.started = ent.getValue().getStarted().toString();
-
-      thriftPlanInfo.queryAttributes = new HashMap<String, String>();
-      setMapValForString(thriftPlanInfo.queryAttributes, ent.getValue().getQuery().getQueryAttributes());
-
-      thriftPlanInfo.queryCounters = new HashMap<String, Long>();
-      setMapValForLong(thriftPlanInfo.queryCounters, ent.getValue().getQuery().getQueryCounters());
-
-      thriftPlanInfo.stageGraph = new GraphInfo();
-      setStageGraph(thriftPlanInfo.stageGraph, ent.getValue().getQuery().getStageGraph());
-
-      thriftPlanInfo.stageList = new ArrayList<StageInfo>();
-      setStageList(thriftPlanInfo.stageList, ent.getValue().getQuery().getStageList());
-
-      thriftPlansInfo.put(key, thriftPlanInfo);
+      thriftPlanInfo.timeStamp = ent.getTimeStamp();
+      thriftPlanInfo.planDetails = new PlanDetails();
+      setPlanDetails(thriftPlanInfo.planDetails, ent.getQueryPlan());
+      thriftPlansInfo.add(thriftPlanInfo);
     }
+  }
+
+  private static void setPlanDetails(PlanDetails thriftPlanDetails, QueryPlan plan) {
+    thriftPlanDetails.queryId = plan.getQueryId();
+
+    thriftPlanDetails.queryType = plan.getQuery().getQueryType();
+    thriftPlanDetails.done = plan.getDone().toString();
+    thriftPlanDetails.started = plan.getStarted().toString();
+
+    thriftPlanDetails.queryAttributes = new HashMap<String, String>();
+    setMapValForString(thriftPlanDetails.queryAttributes, plan.getQuery().getQueryAttributes());
+
+    thriftPlanDetails.queryCounters = new HashMap<String, Long>();
+    setMapValForLong(thriftPlanDetails.queryCounters, plan.getQuery().getQueryCounters());
+
+    thriftPlanDetails.stageGraph = new GraphInfo();
+    setStageGraph(thriftPlanDetails.stageGraph, plan.getQuery().getStageGraph());
+
+    thriftPlanDetails.stageList = new ArrayList<StageInfo>();
+    setStageList(thriftPlanDetails.stageList, plan.getQuery().getStageList());
   }
 
   private static void setStageGraph(GraphInfo thriftStageGraph, Graph stageGraph) {
@@ -220,7 +226,7 @@ public class QueryCompletedEventScriber {
     for (QueryStats.progressSnapshot progress : taskProgress) {
       ProgressInfo thriftProgressInfo = new ProgressInfo();
       thriftProgressInfo.timeStamp = progress.getTimeStamp();
-      thriftProgressInfo.value = progress.getProgress();
+      thriftProgressInfo.progress = progress.getProgress();
       thriftTaskProgress.add(thriftProgressInfo);
     }
   }

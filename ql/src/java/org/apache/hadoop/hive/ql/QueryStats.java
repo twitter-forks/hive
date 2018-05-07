@@ -19,7 +19,7 @@ public class QueryStats {
   private String mapReduceStatsDesc;
   private String currentTimeStamp;
   private ArrayList<progressSnapshot> taskProgress;
-  private Map<String, QueryPlan> plansInfo;
+  private ArrayList<planSnapshot> plansInfo;
   private Map<String, MapRedStats> mapReduceStats;
 
   public static class progressSnapshot {
@@ -43,13 +43,34 @@ public class QueryStats {
     }
   }
 
+  public static class planSnapshot {
+    private long timeStamp;
+    private QueryPlan queryPlan;
+
+    public long getTimeStamp() {
+      return timeStamp;
+    }
+
+    public void setTimeStamp(long timeStamp) {
+      this.timeStamp = timeStamp;
+    }
+
+    public QueryPlan getQueryPlan() {
+      return queryPlan;
+    }
+
+    public void setQueryPlan(QueryPlan queryPlan) {
+      this.queryPlan = queryPlan;
+    }
+  }
+
   public QueryStats(String queryID, String queryString, long start) {
     this.queryID = queryID;
     this.queryString = queryString;
     this.queryStart = start;
     this.queryEnd = -1;
     this.taskProgress = new ArrayList<>();
-    this.plansInfo = new HashMap<>();
+    this.plansInfo = new ArrayList<>();
     this.mapReduceStats = new HashMap<>();
   }
 
@@ -137,7 +158,7 @@ public class QueryStats {
     return this.taskProgress;
   }
 
-  public Map<String, QueryPlan> getPlansInfo() {
+  public ArrayList<planSnapshot> getPlansInfo() {
     return this.plansInfo;
   }
 
