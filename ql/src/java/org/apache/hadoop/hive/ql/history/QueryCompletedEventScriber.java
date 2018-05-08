@@ -43,7 +43,7 @@ import com.twitter.hive.thriftjava.PlanInfo;
 import com.twitter.hive.thriftjava.QueryStageInfo;
 import com.twitter.hive.thriftjava.StageInfo;
 import com.twitter.hive.thriftjava.TaskInfo;
-import com.twitter.hive.thriftjava.ProgressInfo;
+import com.twitter.hive.thriftjava.TaskDetailInfo;
 import com.twitter.hive.thriftjava.PlanDetails;
 
 /**
@@ -79,13 +79,13 @@ public class QueryCompletedEventScriber {
     thriftEvent.ip = event.getIPAddress();
     thriftEvent.sessionId = event.getSessionID();
     thriftEvent.database = event.getDatabase();
-    thriftEvent.plansInfo = new ArrayList<PlanInfo>();
-    thriftEvent.taskProgress = new ArrayList<ProgressInfo>();
-    thriftEvent.mapReduceInfo = new HashMap<String, QueryStageInfo>();
+    thriftEvent.planProgress = new ArrayList<PlanInfo>();
+    thriftEvent.taskProgress = new ArrayList<TaskDetailInfo>();
+    thriftEvent.mapReduceStats = new HashMap<String, QueryStageInfo>();
 
-    setPlansInfo(thriftEvent.plansInfo, event.getPlanProgress());
+    setPlansInfo(thriftEvent.planProgress, event.getPlanProgress());
     setTaskProgress(thriftEvent.taskProgress, event.getTaskProgress());
-    setMapReduceStats(thriftEvent.mapReduceInfo, event.getMapReduceStats());
+    setMapReduceStats(thriftEvent.mapReduceStats, event.getMapReduceStats());
 
     return thriftEvent;
   }
@@ -93,15 +93,15 @@ public class QueryCompletedEventScriber {
   /**
    * Update plansInfo for thrift object according to pre-defined schema
    */
-  private static void setPlansInfo(List<PlanInfo> thriftPlansInfo, ArrayList<QueryStats.plan> plansInfo) {
-    if (plansInfo == null) {
+  private static void setPlansInfo(List<PlanInfo> thriftPlansInfo, ArrayList<QueryStats.plan> planProgress) {
+    if (planProgress == null) {
       return;
     }
-    for (QueryStats.plan ent : plansInfo) {
+    for (QueryStats.plan planEnt : planProgress) {
       PlanInfo thriftPlanInfo = new PlanInfo();
-      thriftPlanInfo.timeStamp = ent.getTimeStamp();
+      thriftPlanInfo.timeStamp = planEnt.getTimeStamp();
       thriftPlanInfo.planDetails = new PlanDetails();
-      setPlanDetails(thriftPlanInfo.planDetails, ent.getQueryPlan());
+      setPlanDetails(thriftPlanInfo.planDetails, planEnt.getQueryPlan());
       thriftPlansInfo.add(thriftPlanInfo);
     }
   }
@@ -168,22 +168,22 @@ public class QueryCompletedEventScriber {
     if (stageList == null) {
       return;
     }
-    for (Stage aStage : stageList) {
+    for (Stage stage : stageList) {
       StageInfo stageEnt = new StageInfo();
-      stageEnt.stageId = aStage.getStageId();
-      stageEnt.stageType = aStage.getStageType().toString();
+      stageEnt.stageId = stage.getStageId();
+      stageEnt.stageType = stage.getStageType().toString();
 
       stageEnt.stageAttributes = new HashMap<String, String>();
-      setMapValForString(stageEnt.stageAttributes, aStage.getStageAttributes());
+      setMapValForString(stageEnt.stageAttributes, stage.getStageAttributes());
 
       stageEnt.stageCounters = new HashMap<String, Long>();
-      setMapValForLong(stageEnt.stageCounters, aStage.getStageCounters());
+      setMapValForLong(stageEnt.stageCounters, stage.getStageCounters());
 
       stageEnt.taskList = new ArrayList<TaskInfo>();
-      setTaskList(stageEnt.taskList, aStage.getTaskList());
+      setTaskList(stageEnt.taskList, stage.getTaskList());
 
-      stageEnt.done = aStage.isDone();
-      stageEnt.started = aStage.isStarted();
+      stageEnt.done = stage.isDone();
+      stageEnt.started = stage.isStarted();
       thriftStageList.add(stageEnt);
     }
   }
@@ -192,37 +192,37 @@ public class QueryCompletedEventScriber {
     if (taskList == null) {
       return;
     }
-    for (Task aTask : taskList) {
+    for (Task task : taskList) {
       TaskInfo thriftTaskListEnt = new TaskInfo();
-      thriftTaskListEnt.taskId = aTask.getTaskId();
-      thriftTaskListEnt.taskType = aTask.getTaskType().toString();
-      thriftTaskListEnt.done = aTask.isDone();
-      thriftTaskListEnt.started = aTask.isStarted();
+      thriftTaskListEnt.taskId = task.getTaskId();
+      thriftTaskListEnt.taskType = task.getTaskType().toString();
+      thriftTaskListEnt.done = task.isDone();
+      thriftTaskListEnt.started = task.isStarted();
 
       thriftTaskListEnt.taskAttributes = new HashMap<String, String>();
-      setMapValForString(thriftTaskListEnt.taskAttributes, aTask.getTaskAttributes());
+      setMapValForString(thriftTaskListEnt.taskAttributes, task.getTaskAttributes());
 
       thriftTaskListEnt.taskCounters = new HashMap<String, Long>();
-      setMapValForLong(thriftTaskListEnt.taskCounters, aTask.getTaskCounters());
+      setMapValForLong(thriftTaskListEnt.taskCounters, task.getTaskCounters());
 
       thriftTaskListEnt.operatorGraph = new GraphInfo();
-      setOperatorGraph(thriftTaskListEnt.operatorGraph, aTask.getOperatorGraph());
+      setOperatorGraph(thriftTaskListEnt.operatorGraph, task.getOperatorGraph());
 
       thriftTaskListEnt.operatorList = new ArrayList<OperatorInfo>();
-      setOperatorList(thriftTaskListEnt.operatorList, aTask.getOperatorList());
+      setOperatorList(thriftTaskListEnt.operatorList, task.getOperatorList());
 
       thriftTaskList.add(thriftTaskListEnt);
     }
   }
 
-  private static void setTaskProgress(List<ProgressInfo> thriftTaskProgress, ArrayList<QueryStats.task> taskProgress) {
+  private static void setTaskProgress(List<TaskDetailInfo> thriftTaskProgress, ArrayList<QueryStats.taskDetail> taskProgress) {
     if (taskProgress == null) {
       return;
     }
-    for (QueryStats.task progress : taskProgress) {
-      ProgressInfo thriftProgressInfo = new ProgressInfo();
-      thriftProgressInfo.timeStamp = progress.getTimeStamp();
-      thriftProgressInfo.progress = progress.getProgress();
+    for (QueryStats.taskDetail tDetail : taskProgress) {
+      TaskDetailInfo thriftProgressInfo = new TaskDetailInfo();
+      thriftProgressInfo.timeStamp = tDetail.getTimeStamp();
+      thriftProgressInfo.progress = tDetail.getProgress();
       thriftTaskProgress.add(thriftProgressInfo);
     }
   }
@@ -266,11 +266,11 @@ public class QueryCompletedEventScriber {
     if (adjacencyList == null) {
       return;
     }
-    for (Adjacency anAdjacency : adjacencyList) {
+    for (Adjacency adjacency : adjacencyList) {
       AdjacencyInfo adjacencyInfo = new AdjacencyInfo();
-      adjacencyInfo.node = anAdjacency.getNode();
-      adjacencyInfo.children = anAdjacency.getChildren();
-      adjacencyInfo.adjacencyType = anAdjacency.getAdjacencyType().toString();
+      adjacencyInfo.node = adjacency.getNode();
+      adjacencyInfo.children = adjacency.getChildren();
+      adjacencyInfo.adjacencyType = adjacency.getAdjacencyType().toString();
       thriftAdjacencyList.add(adjacencyInfo);
     }
   }
@@ -279,16 +279,16 @@ public class QueryCompletedEventScriber {
     if (operatorList == null) {
       return;
     }
-    for (Operator anOperator : operatorList) {
+    for (Operator operator : operatorList) {
       OperatorInfo operatorInfo = new OperatorInfo();
-      operatorInfo.operatorId = anOperator.getOperatorId();
-      operatorInfo.operatorType = anOperator.getOperatorType().toString();
-      operatorInfo.done = anOperator.isDone();
-      operatorInfo.started = anOperator.isStarted();
+      operatorInfo.operatorId = operator.getOperatorId();
+      operatorInfo.operatorType = operator.getOperatorType().toString();
+      operatorInfo.done = operator.isDone();
+      operatorInfo.started = operator.isStarted();
       operatorInfo.operatorAttributes = new HashMap<String, String>();
-      setMapValForString(operatorInfo.operatorAttributes, anOperator.getOperatorAttributes());
+      setMapValForString(operatorInfo.operatorAttributes, operator.getOperatorAttributes());
       operatorInfo.operatorCounters = new HashMap<String, Long>();
-      setMapValForLong(operatorInfo.operatorCounters, anOperator.getOperatorCounters());
+      setMapValForLong(operatorInfo.operatorCounters, operator.getOperatorCounters());
       thriftOperatorList.add(operatorInfo);
     }
   }

@@ -270,18 +270,18 @@ public class HiveScribeImpl implements HiveHistory {
     addTaskProgress(stats.getTaskProgress(), timeStamp, snapshot.toString());
   }
 
-  private void addTaskProgress(ArrayList<QueryStats.task> taskProgressStats, Long timeStamp, String taskProgress) {
-    int listSize = taskProgressStats.size();
+  private void addTaskProgress(ArrayList<QueryStats.taskDetail> taskProgress, Long timeStamp, String task) {
+    int listSize = taskProgress.size();
     if (listSize > 0) {
-      String lastProgress = taskProgressStats.get(listSize - 1).getProgress();
-      if (taskProgress.equals(lastProgress)) {
+      String lastProgress = taskProgress.get(listSize - 1).getProgress();
+      if (task.equals(lastProgress)) {
         return;
       }
     }
-    QueryStats.task newSnapshot = new QueryStats.task();
-    newSnapshot.setTimeStamp(timeStamp);
-    newSnapshot.setProgress(taskProgress);
-    taskProgressStats.add(newSnapshot);
+    QueryStats.taskDetail newTask = new QueryStats.taskDetail();
+    newTask.setTimeStamp(timeStamp);
+    newTask.setProgress(task);
+    taskProgress.add(newTask);
   }
 
   @Override
@@ -303,10 +303,10 @@ public class HiveScribeImpl implements HiveHistory {
         return;
       }
     }
-    QueryStats.plan newSnapshot = new QueryStats.plan();
-    newSnapshot.setTimeStamp(timeStamp);
-    newSnapshot.setQueryPlan(plan);
-    plansInfo.add(newSnapshot);
+    QueryStats.plan newPlan = new QueryStats.plan();
+    newPlan.setTimeStamp(timeStamp);
+    newPlan.setQueryPlan(plan);
+    plansInfo.add(newPlan);
   }
 
   @Override

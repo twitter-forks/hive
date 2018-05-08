@@ -18,11 +18,11 @@ public class QueryStats {
   private String database;
   private String mapReduceStatsDesc;
   private String currentTimeStamp;
-  private ArrayList<task> taskProgress;
+  private ArrayList<taskDetail> taskProgress;
   private ArrayList<plan> planProgress;
   private Map<String, MapRedStats> mapReduceStats;
 
-  public static class task {
+  public static class taskDetail {
     private Long timeStamp;
     private String progress;
 
@@ -155,7 +155,7 @@ public class QueryStats {
     return this.currentTimeStamp;
   }
 
-  public ArrayList<task> getTaskProgress() {
+  public ArrayList<taskDetail> getTaskProgress() {
     return this.taskProgress;
   }
 
