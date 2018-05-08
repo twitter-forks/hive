@@ -71,17 +71,18 @@ public class HiveScribeImpl implements HiveHistory {
       return;
     }
 
-    HiveHistory.QueryInfo queryInfo = createNewQueryEventEntry(id, cmd);
-    queryInfoMap.put(id, queryInfo);
+    HiveHistory.QueryInfo newQueryInfo = createNewQueryEventEntry(id, cmd);
+    queryInfoMap.put(id, newQueryInfo);
 
-    QueryStats newQueryStats = createNewQueryMetricEntry(queryInfo.hm, timeStamp);
+    QueryStats newQueryStats = createNewQueryMetricEntry(newQueryInfo.hm, timeStamp);
     queryStatsMap.put(id, newQueryStats);
   }
 
   /**
-   * Create a QueryStats object for each query to store query info and runtime statistics.
+   * Create a QueryStats object for each query to store query identity and runtime statistics.
    * Store query id and QueryStats as key-value pairs in queryStatsMap.
-   * (Note that queryStatsMap is different from queryInfoMap.)
+   * (Note that queryStatsMap is different from queryInfoMap, where the latter is a scalar event
+   * such as query start, query end, task start, etc.)
    * Statistics for each query is updated as tasks and plans progress, and are passed to scriber
    * after each query is completed. Scribed entry will be removed from queryStatsMap in the end.
    *
@@ -204,7 +205,7 @@ public class HiveScribeImpl implements HiveHistory {
   public void endQuery(String queryId) {
     Long timeStamp = System.currentTimeMillis();
     QueryStats stats = queryStatsMap.get(queryId);
-    stats.setQueryEnd(timeStamp);
+    stats.setEndTime(timeStamp);
     addSessionInfo(queryId);
     scribeQueryMetricEntry(queryId);
     queryInfoMap.remove(queryId);
@@ -218,7 +219,7 @@ public class HiveScribeImpl implements HiveHistory {
     String id = queryId + ":" + task.getId();
     taskInfoMap.put(id, taskInfo);
     QueryStats stats = queryStatsMap.get(queryId);
-    snapshotTaskProgress(RecordTypes.TaskStart, stats, taskInfo.hm, timeStamp);
+    logTaskProgress(RecordTypes.TaskStart, stats, taskInfo.hm, timeStamp);
   }
 
   private TaskInfo createNewTaskEventEntry(String queryId, String taskId, String taskName) {
@@ -238,7 +239,7 @@ public class HiveScribeImpl implements HiveHistory {
       return;
     }
     QueryStats stats = queryStatsMap.get(queryId);
-    snapshotTaskProgress(RecordTypes.TaskEnd, stats, taskInfo.hm, timeStamp);
+    logTaskProgress(RecordTypes.TaskEnd, stats, taskInfo.hm, timeStamp);
     taskInfoMap.remove(id);
   }
 
@@ -251,10 +252,10 @@ public class HiveScribeImpl implements HiveHistory {
       return;
     }
     QueryStats stats = queryStatsMap.get(queryId);
-    snapshotTaskProgress(RecordTypes.TaskProgress, stats, taskInfo.hm, timeStamp);
+    logTaskProgress(RecordTypes.TaskProgress, stats, taskInfo.hm, timeStamp);
   }
 
-  private void snapshotTaskProgress(RecordTypes recordTypes, QueryStats stats, Map<String, String> taskStats, Long timeStamp) {
+  private void logTaskProgress(RecordTypes recordTypes, QueryStats stats, Map<String, String> taskStats, Long timeStamp) {
     StringBuilder snapshot = new StringBuilder("");
     snapshot.append(recordTypes.name());
     for (Map.Entry<String, String> ent : taskStats.entrySet()) {
@@ -266,10 +267,10 @@ public class HiveScribeImpl implements HiveHistory {
       snapshot.append(" ");
       snapshot.append(key + "=\"" + val + "\"");
     }
-    insertTaskProgress(stats.getTaskProgress(), timeStamp, snapshot.toString());
+    addTaskProgress(stats.getTaskProgress(), timeStamp, snapshot.toString());
   }
 
-  private void insertTaskProgress(ArrayList<QueryStats.progressSnapshot> taskProgressStats, Long timeStamp, String taskProgress) {
+  private void addTaskProgress(ArrayList<QueryStats.task> taskProgressStats, Long timeStamp, String taskProgress) {
     int listSize = taskProgressStats.size();
     if (listSize > 0) {
       String lastProgress = taskProgressStats.get(listSize - 1).getProgress();
@@ -277,7 +278,7 @@ public class HiveScribeImpl implements HiveHistory {
         return;
       }
     }
-    QueryStats.progressSnapshot newSnapshot = new QueryStats.progressSnapshot();
+    QueryStats.task newSnapshot = new QueryStats.task();
     newSnapshot.setTimeStamp(timeStamp);
     newSnapshot.setProgress(taskProgress);
     taskProgressStats.add(newSnapshot);
@@ -291,10 +292,10 @@ public class HiveScribeImpl implements HiveHistory {
     }
     String queryId = plan.getQueryId();
     QueryStats stats = queryStatsMap.get(queryId);
-    insertPlan(stats.getPlansInfo(), timeStamp, plan);
+    addPlan(stats.getPlanProgress(), timeStamp, plan);
   }
 
-  private void insertPlan(ArrayList<QueryStats.planSnapshot> plansInfo, long timeStamp, QueryPlan plan) {
+  private void addPlan(ArrayList<QueryStats.plan> plansInfo, long timeStamp, QueryPlan plan) {
     int listSize = plansInfo.size();
     if (listSize > 0) {
       String lastProgress = plansInfo.get(listSize - 1).getQueryPlan().toString();
@@ -302,7 +303,7 @@ public class HiveScribeImpl implements HiveHistory {
         return;
       }
     }
-    QueryStats.planSnapshot newSnapshot = new QueryStats.planSnapshot();
+    QueryStats.plan newSnapshot = new QueryStats.plan();
     newSnapshot.setTimeStamp(timeStamp);
     newSnapshot.setQueryPlan(plan);
     plansInfo.add(newSnapshot);

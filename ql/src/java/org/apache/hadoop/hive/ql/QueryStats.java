@@ -8,9 +8,9 @@ import java.util.Map;
  * QueryStats.
  */
 public class QueryStats {
-  private long queryStart;
-  private long queryEnd;
-  private String queryID;
+  private long startTime;
+  private long endTime;
+  private String queryId;
   private String queryString;
   private String sessionID;
   private String IPAddress;
@@ -18,19 +18,19 @@ public class QueryStats {
   private String database;
   private String mapReduceStatsDesc;
   private String currentTimeStamp;
-  private ArrayList<progressSnapshot> taskProgress;
-  private ArrayList<planSnapshot> plansInfo;
+  private ArrayList<task> taskProgress;
+  private ArrayList<plan> planProgress;
   private Map<String, MapRedStats> mapReduceStats;
 
-  public static class progressSnapshot {
-    private long timeStamp;
+  public static class task {
+    private Long timeStamp;
     private String progress;
 
-    public long getTimeStamp() {
+    public Long getTimeStamp() {
       return timeStamp;
     }
 
-    public void setTimeStamp(long timeStamp) {
+    public void setTimeStamp(Long timeStamp) {
       this.timeStamp = timeStamp;
     }
 
@@ -43,15 +43,15 @@ public class QueryStats {
     }
   }
 
-  public static class planSnapshot {
-    private long timeStamp;
+  public static class plan {
+    private Long timeStamp;
     private QueryPlan queryPlan;
 
-    public long getTimeStamp() {
+    public Long getTimeStamp() {
       return timeStamp;
     }
 
-    public void setTimeStamp(long timeStamp) {
+    public void setTimeStamp(Long timeStamp) {
       this.timeStamp = timeStamp;
     }
 
@@ -64,38 +64,39 @@ public class QueryStats {
     }
   }
 
-  public QueryStats(String queryID, String queryString, long start) {
-    this.queryID = queryID;
+  public QueryStats(String queryID, String queryString, Long queryStart) {
+    assert (queryID != null && queryString != null && queryStart != null) : "Invalid query entry. Failed to create a new QueryStats entry.";
+    this.queryId = queryID;
     this.queryString = queryString;
-    this.queryStart = start;
-    this.queryEnd = -1;
+    this.startTime = queryStart;
+    this.endTime = -1;
     this.taskProgress = new ArrayList<>();
-    this.plansInfo = new ArrayList<>();
+    this.planProgress = new ArrayList<>();
     this.mapReduceStats = new HashMap<>();
   }
 
-  public void setQueryStart(Long timeStamp) {
-    this.queryStart = timeStamp;
+  public void setStartTime(Long timeStamp) {
+    this.startTime = timeStamp;
   }
 
-  public Long getQueryStart() {
-    return this.queryStart;
+  public Long getStartTime() {
+    return this.startTime;
   }
 
-  public void setQueryEnd(Long timeStamp) {
-    this.queryEnd = timeStamp;
+  public void setEndTime(Long timeStamp) {
+    this.endTime = timeStamp;
   }
 
-  public Long getQueryEnd() {
-    return this.queryEnd;
+  public Long getEndTime() {
+    return this.endTime;
   }
 
-  public void setQueryID(String queryID) {
-    this.queryID = queryID;
+  public void setQueryId(String queryId) {
+    this.queryId = queryId;
   }
 
-  public String getQueryID() {
-    return this.queryID;
+  public String getQueryId() {
+    return this.queryId;
   }
 
   public void setQueryString(String queryString) {
@@ -154,12 +155,12 @@ public class QueryStats {
     return this.currentTimeStamp;
   }
 
-  public ArrayList<progressSnapshot> getTaskProgress() {
+  public ArrayList<task> getTaskProgress() {
     return this.taskProgress;
   }
 
-  public ArrayList<planSnapshot> getPlansInfo() {
-    return this.plansInfo;
+  public ArrayList<plan> getPlanProgress() {
+    return this.planProgress;
   }
 
   public Map<String, MapRedStats> getMapReduceStats() {

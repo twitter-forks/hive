@@ -18,10 +18,7 @@
 
 package org.apache.hadoop.hive.ql.history;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +26,6 @@ import java.util.Map;
 import org.apache.hadoop.hive.ql.MapRedStats;
 import org.apache.hadoop.hive.ql.QueryPlan;
 import org.apache.hadoop.hive.ql.QueryStats;
-import org.apache.hadoop.hive.ql.plan.PlanUtils;
 import org.apache.hadoop.hive.ql.plan.api.Adjacency;
 import org.apache.hadoop.hive.ql.plan.api.Graph;
 import org.apache.hadoop.hive.ql.plan.api.Operator;
@@ -65,7 +61,7 @@ public class QueryCompletedEventScriber {
     } catch (TException e) {
       String errorMsg = String.format("Could not serialize thrift object of " +
               "Query(id=%s, user=%s, session=%s, database=%s)",
-          event.getQueryID(),
+          event.getQueryId(),
           event.getUsername(),
           event.getSessionID(),
           event.getDatabase());
@@ -75,10 +71,10 @@ public class QueryCompletedEventScriber {
 
   private static HiveQueryCompletionEvent toThriftQueryCompletionEvent(QueryStats event) {
     HiveQueryCompletionEvent thriftEvent = new HiveQueryCompletionEvent();
-    thriftEvent.queryId = event.getQueryID();
+    thriftEvent.queryId = event.getQueryId();
     thriftEvent.queryString = event.getQueryString();
-    thriftEvent.startTime = event.getQueryStart();
-    thriftEvent.endTime = event.getQueryEnd();
+    thriftEvent.startTime = event.getStartTime();
+    thriftEvent.endTime = event.getEndTime();
     thriftEvent.user = event.getUsername();
     thriftEvent.ip = event.getIPAddress();
     thriftEvent.sessionId = event.getSessionID();
@@ -87,7 +83,7 @@ public class QueryCompletedEventScriber {
     thriftEvent.taskProgress = new ArrayList<ProgressInfo>();
     thriftEvent.mapReduceInfo = new HashMap<String, QueryStageInfo>();
 
-    setPlansInfo(thriftEvent.plansInfo, event.getPlansInfo());
+    setPlansInfo(thriftEvent.plansInfo, event.getPlanProgress());
     setTaskProgress(thriftEvent.taskProgress, event.getTaskProgress());
     setMapReduceStats(thriftEvent.mapReduceInfo, event.getMapReduceStats());
 
@@ -97,11 +93,11 @@ public class QueryCompletedEventScriber {
   /**
    * Update plansInfo for thrift object according to pre-defined schema
    */
-  private static void setPlansInfo(List<PlanInfo> thriftPlansInfo, ArrayList<QueryStats.planSnapshot> plansInfo) {
+  private static void setPlansInfo(List<PlanInfo> thriftPlansInfo, ArrayList<QueryStats.plan> plansInfo) {
     if (plansInfo == null) {
       return;
     }
-    for (QueryStats.planSnapshot ent : plansInfo) {
+    for (QueryStats.plan ent : plansInfo) {
       PlanInfo thriftPlanInfo = new PlanInfo();
       thriftPlanInfo.timeStamp = ent.getTimeStamp();
       thriftPlanInfo.planDetails = new PlanDetails();
@@ -219,11 +215,11 @@ public class QueryCompletedEventScriber {
     }
   }
 
-  private static void setTaskProgress(List<ProgressInfo> thriftTaskProgress, ArrayList<QueryStats.progressSnapshot> taskProgress) {
+  private static void setTaskProgress(List<ProgressInfo> thriftTaskProgress, ArrayList<QueryStats.task> taskProgress) {
     if (taskProgress == null) {
       return;
     }
-    for (QueryStats.progressSnapshot progress : taskProgress) {
+    for (QueryStats.task progress : taskProgress) {
       ProgressInfo thriftProgressInfo = new ProgressInfo();
       thriftProgressInfo.timeStamp = progress.getTimeStamp();
       thriftProgressInfo.progress = progress.getProgress();
