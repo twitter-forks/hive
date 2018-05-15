@@ -280,6 +280,7 @@ public class HiveScribeImpl implements HiveHistory {
     }
     QueryStats.taskDetail newTask = new QueryStats.taskDetail();
     newTask.setTimeStamp(timeStamp);
+    LOG.info(String.format("dac-debug: tasktime, %d",timeStamp));
     newTask.setProgress(task);
     taskProgress.add(newTask);
   }
@@ -305,6 +306,7 @@ public class HiveScribeImpl implements HiveHistory {
     }
     QueryStats.plan newPlan = new QueryStats.plan();
     newPlan.setTimeStamp(timeStamp);
+    LOG.info(String.format("dac-debug: plantime, %d",timeStamp));
     newPlan.setQueryPlan(plan);
     plansInfo.add(newPlan);
   }

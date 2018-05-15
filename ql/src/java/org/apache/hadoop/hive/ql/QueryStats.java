@@ -23,14 +23,14 @@ public class QueryStats {
   private Map<String, MapRedStats> mapReduceStats;
 
   public static class taskDetail {
-    private Long timeStamp;
+    private long timeStamp;
     private String progress;
 
-    public Long getTimeStamp() {
+    public long getTimeStamp() {
       return timeStamp;
     }
 
-    public void setTimeStamp(Long timeStamp) {
+    public void setTimeStamp(long timeStamp) {
       this.timeStamp = timeStamp;
     }
 
@@ -44,14 +44,14 @@ public class QueryStats {
   }
 
   public static class plan {
-    private Long timeStamp;
+    private long timeStamp;
     private QueryPlan queryPlan;
 
-    public Long getTimeStamp() {
+    public long getTimeStamp() {
       return timeStamp;
     }
 
-    public void setTimeStamp(Long timeStamp) {
+    public void setTimeStamp(long timeStamp) {
       this.timeStamp = timeStamp;
     }
 
@@ -75,19 +75,19 @@ public class QueryStats {
     this.mapReduceStats = new HashMap<>();
   }
 
-  public void setStartTime(Long timeStamp) {
+  public void setStartTime(long timeStamp) {
     this.startTime = timeStamp;
   }
 
-  public Long getStartTime() {
+  public long getStartTime() {
     return this.startTime;
   }
 
-  public void setEndTime(Long timeStamp) {
+  public void setEndTime(long timeStamp) {
     this.endTime = timeStamp;
   }
 
-  public Long getEndTime() {
+  public long getEndTime() {
     return this.endTime;
   }
 
