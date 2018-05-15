@@ -20,7 +20,6 @@ import java.util.logging.LogRecord;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
-import org.mortbay.log.Log;
 
 import com.twitter.logging.BareFormatter$;
 import com.twitter.logging.Level;
@@ -61,7 +60,6 @@ public class TwitterScriber
   public void scribe(TBase thriftMessage)
       throws TException
   {
-    Log.info("dac-debug: before final test" + thriftMessage.toString());
     scribe(serializeThriftToString(thriftMessage));
   }
 
@@ -72,9 +70,7 @@ public class TwitterScriber
   private String serializeThriftToString(TBase thriftMessage)
       throws TException
   {
-    String tmp = Base64.getEncoder().encodeToString(serializer.get().serialize(thriftMessage));
-    Log.info("dac-debug: final test" + tmp);
-    return tmp;
+    return Base64.getEncoder().encodeToString(serializer.get().serialize(thriftMessage));
   }
 
   private void scribe(String message)
@@ -83,4 +79,3 @@ public class TwitterScriber
     queueingHandler.publish(logRecord);
   }
 }
-

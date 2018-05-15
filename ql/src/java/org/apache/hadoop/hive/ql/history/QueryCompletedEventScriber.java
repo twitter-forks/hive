@@ -32,7 +32,6 @@ import org.apache.hadoop.hive.ql.plan.api.Operator;
 import org.apache.hadoop.hive.ql.plan.api.Stage;
 import org.apache.hadoop.hive.ql.plan.api.Task;
 import org.apache.thrift.TException;
-import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +57,6 @@ public class QueryCompletedEventScriber {
 
   public void handle(QueryStats event) {
     try {
-
       scriber.scribe(toThriftQueryCompletionEvent(event));
     } catch (TException e) {
       String errorMsg = String.format("Could not serialize thrift object of " +
@@ -85,32 +83,23 @@ public class QueryCompletedEventScriber {
     thriftEvent.setTaskProgress(new ArrayList<>());
     thriftEvent.setMapReduceStats(new HashMap<>());
 
-    setPlansInfo(thriftEvent.getPlanProgress(), event.getPlanProgress());
+    setPlanProgress(thriftEvent.getPlanProgress(), event.getPlanProgress());
     setTaskProgress(thriftEvent.getTaskProgress(), event.getTaskProgress());
     setMapReduceStats(thriftEvent.getMapReduceStats(), event.getMapReduceStats());
 
-    if (thriftEvent.getTaskProgress().size() > 0) {
-      LOG.info(String.format("dac-debug: check task timeStamp, %d", thriftEvent.getTaskProgress().get(0).getTimeStamp()));
-      Log.info(String.format("dac-debug: test test: %s\n---\n%s", thriftEvent.getTaskProgress().toString(), thriftEvent.getTaskProgress().get(0).toString()));
-    }
-    if (thriftEvent.getPlanProgress().size() > 0) {
-      LOG.info(String.format("dac-debug: check plan timeStamp, %d", thriftEvent.getPlanProgress().get(0).getTimeStamp()));
-    }
     return thriftEvent;
   }
 
   /**
    * Update plansInfo for thrift object according to pre-defined schema
    */
-  private static void setPlansInfo(List<PlanInfo> thriftPlansInfo, ArrayList<QueryStats.plan> planProgress) {
+  private static void setPlanProgress(List<PlanInfo> thriftPlansInfo, ArrayList<QueryStats.plan> planProgress) {
     if (planProgress == null) {
       return;
     }
     for (QueryStats.plan planEnt : planProgress) {
       PlanInfo thriftPlanInfo = new PlanInfo();
-      //thriftPlanInfo.timeStamp = planEnt.getTimeStamp();
       thriftPlanInfo.setTimeStamp(planEnt.getTimeStamp());
-      LOG.info(String.format("dac-debug: pass plan timeStamp, %d to %d", planEnt.getTimeStamp(), thriftPlanInfo.getTimeStamp()));
       thriftPlanInfo.setPlanDetails(new PlanDetails());
       setPlanDetails(thriftPlanInfo.getPlanDetails(), planEnt.getQueryPlan());
       thriftPlansInfo.add(thriftPlanInfo);
@@ -119,7 +108,6 @@ public class QueryCompletedEventScriber {
 
   private static void setPlanDetails(PlanDetails thriftPlanDetails, QueryPlan plan) {
     thriftPlanDetails.setQueryId(plan.getQueryId());
-
     thriftPlanDetails.setQueryType(plan.getQuery().getQueryType());
     thriftPlanDetails.setDone(plan.getDone().toString());
     thriftPlanDetails.setStarted(plan.getStarted().toString());
@@ -142,27 +130,26 @@ public class QueryCompletedEventScriber {
       return;
     }
     thriftStageGraph.setNodeType(stageGraph.getNodeType().toString());
+
     if (stageGraph.getRoots() != null) {
-      ArrayList roots = new ArrayList<>();
-      roots.addAll(stageGraph.getRoots());
-      thriftStageGraph.setRoots(roots);
+      thriftStageGraph.setRoots(new ArrayList<>());
+      thriftStageGraph.getRoots().addAll(stageGraph.getRoots());
     }
-    ArrayList adjacencyList = new ArrayList<>();
+
+    thriftStageGraph.setAdjacencyList(new ArrayList<>());
     for (int i = 0; i < stageGraph.getAdjacencyListSize(); i++) {
       AdjacencyInfo adjacencyListEnt = new AdjacencyInfo();
       adjacencyListEnt.setNode(stageGraph.getAdjacencyList().get(i).getNode());
       adjacencyListEnt.setChildren(stageGraph.getAdjacencyList().get(i).getChildren());
       adjacencyListEnt.setAdjacencyType(stageGraph.getAdjacencyList().get(i).getAdjacencyType().toString());
-      adjacencyList.add(adjacencyListEnt);
+      thriftStageGraph.getAdjacencyList().add(adjacencyListEnt);
     }
-    thriftStageGraph.setAdjacencyList(adjacencyList);
   }
 
   private static void setMapReduceStats(Map<String, QueryStageInfo> thriftMapReduceInfo, Map<String, MapRedStats> mapReduceInfo) {
     if (mapReduceInfo == null) {
       return;
     }
-
     for (Map.Entry<String, MapRedStats> ent : mapReduceInfo.entrySet()) {
       QueryStageInfo thriftCounterInfo = new QueryStageInfo();
       String key = ent.getKey();
@@ -234,9 +221,7 @@ public class QueryCompletedEventScriber {
     }
     for (QueryStats.taskDetail tDetail : taskProgress) {
       TaskDetailInfo thriftProgressInfo = new TaskDetailInfo();
-      //thriftProgressInfo.timeStamp = tDetail.getTimeStamp();
       thriftProgressInfo.setTimeStamp(tDetail.getTimeStamp());
-      LOG.info(String.format("dac-debug: pass task timeStamp, %d to %d", tDetail.getTimeStamp(), thriftProgressInfo.getTimeStamp()));
       thriftProgressInfo.setProgress(tDetail.getProgress());
       thriftTaskProgress.add(thriftProgressInfo);
     }
@@ -269,11 +254,12 @@ public class QueryCompletedEventScriber {
       return;
     }
     thriftOperatorGraph.setNodeType(operatorGraph.getNodeType().toString());
-    thriftOperatorGraph.setRoots(new ArrayList<>());
     if (operatorGraph.getRoots() != null) {
+      thriftOperatorGraph.setRoots(new ArrayList<>());
       thriftOperatorGraph.getRoots().addAll(operatorGraph.getRoots());
     }
-    thriftOperatorGraph.setAdjacencyList(new ArrayList<AdjacencyInfo>());
+
+    thriftOperatorGraph.setAdjacencyList(new ArrayList<>());
     setAdjacencyList(thriftOperatorGraph.getAdjacencyList(), operatorGraph.getAdjacencyList());
   }
 
