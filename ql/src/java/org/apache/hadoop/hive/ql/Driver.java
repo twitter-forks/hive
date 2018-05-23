@@ -544,7 +544,7 @@ public class Driver implements CommandProcessor {
       MessageDigest digest = MessageDigest.getInstance("SHA-256");
       byte[] bytes = digest.digest(queryStr.getBytes(StandardCharsets.UTF_8));
       String querySignature = new String(bytes, StandardCharsets.UTF_8);
-      conf.set("hive.signature", querySignature);
+      conf.set("hive.query.signature", querySignature.replaceAll("[^a-zA-Z0-9]+","_"));
 
       // initialize FetchTask right here
       if (plan.getFetchTask() != null) {
