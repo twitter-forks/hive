@@ -1078,6 +1078,12 @@ public class DagUtils {
 
     JobConf conf = new JobConf(new TezConfiguration(hiveConf));
 
+    conf.set("mapreduce.map.env", "");
+    conf.set("mapreduce.reduce.env", "");
+    conf.set("tez.am.launch.env", "");
+    conf.set("tez.task.launch.env", "");
+    conf.set("yarn.app.mapreduce.am.env", "");
+
     conf.set("mapred.output.committer.class", NullOutputCommitter.class.getName());
 
     conf.setBoolean("mapred.committer.job.setup.cleanup.needed", false);

@@ -267,6 +267,9 @@ public class FetchOperator implements Serializable {
       if (isNonNativeTable) {
         return true;
       }
+      if (currPath.toUri().toString().contains("hadoop-dw2-nn.smf1.twitter.com")) {
+        currPath = new Path("viewfs", "hadoop-tst-nn.smf1.twitter.com", "/smf1/dw2/" + currPath.toUri().getPath());
+      }
       FileSystem fs = currPath.getFileSystem(job);
       if (fs.exists(currPath)) {
         for (FileStatus fStat : listStatusUnderPath(fs, currPath)) {
