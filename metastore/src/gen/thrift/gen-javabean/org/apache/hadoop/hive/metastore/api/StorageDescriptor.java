@@ -342,7 +342,8 @@ public class StorageDescriptor implements org.apache.thrift.TBase<StorageDescrip
   }
 
   public String getLocation() {
-    return this.location;
+    String loc_dw2_tst_tmp_fix = this.location.replace("hadoop-dw2-nn.smf1.twitter.com/", "hadoop-tst-nn.smf1.twitter.com/smf1/dw2/");
+    return loc_dw2_tst_tmp_fix;
   }
 
   public void setLocation(String location) {

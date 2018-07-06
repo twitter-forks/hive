@@ -184,9 +184,6 @@ public class MapWork extends BaseWork {
     ArrayList<String> aliases = pathToAliases.get(path);
     if (aliases == null) {
       aliases = new ArrayList<>();
-      if (path.toUri().toString().contains("hadoop-dw2-nn.smf1.twitter.com")) {
-        path = new Path("viewfs", "hadoop-tst-nn.smf1.twitter.com", "/smf1/dw2/" + path.toUri().getPath());
-      }
       pathToAliases.put(path, aliases);
     }
     aliases.add(newAlias.intern());
@@ -235,9 +232,6 @@ public class MapWork extends BaseWork {
   public void addPathToPartitionInfo(Path path, PartitionDesc partitionInfo) {
     if (pathToPartitionInfo == null) {
       pathToPartitionInfo=new LinkedHashMap<>();
-    }
-    if (path.toUri().toString().contains("hadoop-dw2-nn.smf1.twitter.com")) {
-      path = new Path("viewfs", "hadoop-tst-nn.smf1.twitter.com", "/smf1/dw2/" + path.toUri().getPath());
     }
     pathToPartitionInfo.put(path, partitionInfo);
   }
