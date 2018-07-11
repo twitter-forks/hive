@@ -351,6 +351,9 @@ public class StorageDescriptor implements org.apache.thrift.TBase<StorageDescrip
     Configuration conf = new Configuration();
     URI fsURI = FileSystem.getDefaultUri(conf);
     Path path = new Path(this.location);
+    // Authority in twitter follows pattern: hadoop-[cluster]-nn.[dataCenter].twitter.com
+    // e.g., hadoop-tst-nn.smf1.twitter.com
+    // Here we extract cluster and dataCenter information to build a new path for this temporary fix
     String cluster = path.toUri().getAuthority().split("-")[1];
     String dataCenter = path.toUri().getAuthority().split("\\.")[1];
     Path locationTmpFix = new Path(path.toUri().getScheme(), fsURI.getAuthority(), '/' + dataCenter + '/' + cluster + path.toUri().getPath());

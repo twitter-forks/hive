@@ -1078,6 +1078,7 @@ public class DagUtils {
 
     JobConf conf = new JobConf(new TezConfiguration(hiveConf));
 
+    // Temporary fix for hadoop bug where hadoop_home is duplicated and assigned to follow params
     conf.set("mapreduce.map.env", "");
     conf.set("mapreduce.reduce.env", "");
     conf.set("tez.am.launch.env", "");
