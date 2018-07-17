@@ -16,7 +16,6 @@ package org.apache.hadoop.hive.ql.io.parquet.read;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -100,7 +99,12 @@ public class DataWritableReadSupport extends ReadSupport<ArrayWritable> {
         return type;
       }
     }
-
+    //TODO: add unit test for w/ and w/o underscore
+    for (Type type : groupType.getFields()) {
+      if ((type.getName() + "_").equalsIgnoreCase(fieldName)) {
+        return type;
+      }
+    }
     return null;
   }
 
