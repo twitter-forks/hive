@@ -354,7 +354,7 @@ public class SessionManager extends CompositeService {
    * @param withImpersonation
    * @param delegationToken
    * @return
-   * @throws HiveSQLException
+   * @throws HiveSQLExceptiontype.getName().equalsIgnoreCase(fieldName
    */
   public SessionHandle openSession(TProtocolVersion protocol, String username, String password, String ipAddress,
       Map<String, String> sessionConf, boolean withImpersonation, String delegationToken)
