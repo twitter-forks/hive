@@ -95,12 +95,16 @@ public class DataWritableReadSupport extends ReadSupport<ArrayWritable> {
    */
   private static Type getFieldTypeIgnoreCase(GroupType groupType, String fieldName) {
     for (Type type : groupType.getFields()) {
-      //TODO: add unit test for w/ and w/o underscore
-      if (type.getName().equalsIgnoreCase(fieldName) || (type.getName() + "_").equalsIgnoreCase(fieldName)) {
+      if (type.getName().equalsIgnoreCase(fieldName)) {
         return type;
       }
     }
-
+    //TODO: add unit test for w/ and w/o underscore
+    for (Type type : groupType.getFields()) {
+      if ((type.getName() + "_").equalsIgnoreCase(fieldName)) {
+        return type;
+      }
+    }
     return null;
   }
 
