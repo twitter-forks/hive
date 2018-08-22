@@ -53,7 +53,7 @@ public class QueryCompletedEventScriber {
 
   private static final Logger LOG = LoggerFactory.getLogger("hive.ql.exec.HiveScribeImpl");
 
-  private TwitterScriber scriber = new TwitterScriber("hive_query_completion_event");
+  private TwitterScriber scriber = new TwitterScriber("hive_query_completion");
 
   public void handle(QueryStats event) {
     try {
