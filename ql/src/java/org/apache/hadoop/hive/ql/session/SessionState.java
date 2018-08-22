@@ -567,7 +567,8 @@ public class SessionState {
 
     if (startSs.hiveHist == null){
       if (startSs.getConf().getBoolVar(HiveConf.ConfVars.HIVE_SESSION_HISTORY_ENABLED)) {
-        if (startSs.getConf().getBoolVar(HiveConf.ConfVars.HIVE_SESSION_HISTORY_SCRIBE_ENABLED)) {
+        if (startSs.getConf().getBoolVar(HiveConf.ConfVars.HIVE_SESSION_HISTORY_SCRIBE_ENABLED) &&
+            !HiveConf.getVar(startSs.getConf(), HiveConf.ConfVars.HIVE_EXECUTION_ENGINE).equals("tez")) {
           startSs.hiveHist = new HiveScribeImpl(startSs);
         } else {
           startSs.hiveHist = new HiveHistoryImpl(startSs);
