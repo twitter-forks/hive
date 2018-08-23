@@ -35,16 +35,16 @@ import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.twitter.hive.thriftjava.AdjacencyInfo;
-import com.twitter.hive.thriftjava.GraphInfo;
-import com.twitter.hive.thriftjava.HiveQueryCompletionEvent;
-import com.twitter.hive.thriftjava.OperatorInfo;
-import com.twitter.hive.thriftjava.PlanDetails;
-import com.twitter.hive.thriftjava.PlanInfo;
-import com.twitter.hive.thriftjava.QueryStageInfo;
-import com.twitter.hive.thriftjava.StageInfo;
-import com.twitter.hive.thriftjava.TaskDetailInfo;
-import com.twitter.hive.thriftjava.TaskInfo;
+import org.apache.hadoop.hive.ql.thrift.hive.AdjacencyInfo;
+import org.apache.hadoop.hive.ql.thrift.hive.GraphInfo;
+import org.apache.hadoop.hive.ql.thrift.hive.HiveQueryCompletionEvent;
+import org.apache.hadoop.hive.ql.thrift.hive.OperatorInfo;
+import org.apache.hadoop.hive.ql.thrift.hive.PlanDetails;
+import org.apache.hadoop.hive.ql.thrift.hive.PlanInfo;
+import org.apache.hadoop.hive.ql.thrift.hive.QueryStageInfo;
+import org.apache.hadoop.hive.ql.thrift.hive.StageInfo;
+import org.apache.hadoop.hive.ql.thrift.hive.TaskDetailInfo;
+import org.apache.hadoop.hive.ql.thrift.hive.TaskInfo;
 
 /**
  * Class that scribes query completion events

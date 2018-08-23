@@ -1,5 +1,5 @@
-namespace java com.twitter.hive.thriftjava
-#@namespace scala com.twitter.hive.thriftscala
+namespace java org.apache.hadoop.hive.ql.thrift.hive
+#@namespace scala org.apache.hadoop.hive.ql.thrifthive
 
 /**
  * Thrift version of a Presto QueryCompletionEvent. See:
