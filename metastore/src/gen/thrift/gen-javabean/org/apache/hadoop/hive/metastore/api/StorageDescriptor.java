@@ -356,7 +356,11 @@ public class StorageDescriptor implements org.apache.thrift.TBase<StorageDescrip
     // Here we extract cluster and dataCenter information to build a new path for this temporary fix
     String cluster = path.toUri().getAuthority().split("-")[1];
     String dataCenter = path.toUri().getAuthority().split("\\.")[1];
-    Path locationTmpFix = new Path(path.toUri().getScheme(), fsURI.getAuthority(), '/' + dataCenter + '/' + cluster + path.toUri().getPath());
+    // We later found that table partition paths may already contain cluster and datacenter information,
+    // e.g., /smf1/dwrev/, if table is not located on dw2. In such case, we wouldn't prepend the same to physical path path.toUri().getPath().
+    Boolean hasClusterDatacenter =  path.toUri().getPath().startsWith("/smf1/");
+    String updatedPath = '/' + dataCenter + '/' + cluster + path.toUri().getPath();
+    Path locationTmpFix = new Path(path.toUri().getScheme(), fsURI.getAuthority(), (hasClusterDatacenter) ? path.toUri().getPath() : updatedPath);
     return locationTmpFix.toUri().toString();
   }
 
