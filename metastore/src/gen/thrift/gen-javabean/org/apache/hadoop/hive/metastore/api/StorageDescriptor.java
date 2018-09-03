@@ -351,6 +351,7 @@ public class StorageDescriptor implements org.apache.thrift.TBase<StorageDescrip
     Configuration conf = new Configuration();
     URI fsURI = FileSystem.getDefaultUri(conf);
     Path path = new Path(this.location);
+    // To-do: this is a temporary fix to enable path naming conversion between cluster-datacenters.
     // Authority in twitter follows pattern: hadoop-[cluster]-nn.[dataCenter].twitter.com
     // e.g., hadoop-tst-nn.smf1.twitter.com
     // Here we extract cluster and dataCenter information to build a new path for this temporary fix
