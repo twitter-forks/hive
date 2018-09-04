@@ -335,21 +335,24 @@ public class StorageDescriptor implements org.apache.thrift.TBase<StorageDescrip
     }
   }
 
+  // Partition URIs at twitter follow two patterns:
+  // 1) Without mount point, e.g. hadoop-dw2-nn.smf1.twitter.com/logs/hive_query_completion/2018/08/30/10, where partitions are located on local cluster dw2.
+  // 2) With mount point, e.g., hadoop-tst-nn.smf1.twitter.com/smf1/dw2/logs/hive_query_completion/2018/08/30/10, where partitions are located on a remote cluster dw2.
+  // Return a generalized partition URI to support cross-cluster queries by extending the case with mount point to cover both cases,
+  // including a special case, e.g., hadoop-dw2-nn.smf1.twitter.com/smf1/dw2/logs/hive_query_completion/2018/08/30/10, which has a dummy mount point.
   public String getLocation() {
     Configuration conf = new Configuration();
     URI fsURI = FileSystem.getDefaultUri(conf);
     Path path = new Path(this.location);
-    // To-do: this is a temporary fix to enable path naming conversion between cluster-datacenters.
-    // Authority in twitter follows pattern: hadoop-[cluster]-nn.[dataCenter].twitter.com
-    // e.g., hadoop-tst-nn.smf1.twitter.com
-    // Here we extract cluster and dataCenter information to build a new path for this temporary fix
-    String cluster = path.toUri().getAuthority().split("-")[1];
+
+    // Extract dataCenter and cluster information according to authority pattern: hadoop-<cluster>-nn.<dataCenter>.twitter.com/
     String dataCenter = path.toUri().getAuthority().split("\\.")[1];
-    // We later found that table partition paths may already contain cluster and datacenter information,
-    // e.g., /smf1/dwrev/, if table is not located on dw2. In such case, we wouldn't prepend the same to physical path path.toUri().getPath().
-    Boolean hasClusterDatacenter =  path.toUri().getPath().startsWith("/smf1/");
+    String cluster = path.toUri().getAuthority().split("-")[1];
+
+    // Append to PathUri the extracted dataCenter and cluster information if missing.
+    Boolean withDataCenterInfo =  path.toUri().getPath().startsWith("/smf1/");
     String updatedPath = '/' + dataCenter + '/' + cluster + path.toUri().getPath();
-    Path locationTmpFix = new Path(path.toUri().getScheme(), fsURI.getAuthority(), (hasClusterDatacenter) ? path.toUri().getPath() : updatedPath);
+    Path locationTmpFix = new Path(path.toUri().getScheme(), fsURI.getAuthority(), withDataCenterInfo ? path.toUri().getPath() : updatedPath);
     return locationTmpFix.toUri().toString();
   }
 
