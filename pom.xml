@@ -1347,5 +1347,11 @@
         <module>itests</module>
       </modules>
     </profile>
+    <profile>
+      <id>twitter-tez-protobuf-version</id>
+      <properties>
+        <protobuf.version>2.5.0.t02</protobuf.version>
+      </properties>
+    </profile>
   </profiles>
 </project>
