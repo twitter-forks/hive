@@ -350,7 +350,7 @@ public class StorageDescriptor implements org.apache.thrift.TBase<StorageDescrip
     String cluster = path.toUri().getAuthority().split("-")[1];
 
     // Append to PathUri the extracted dataCenter and cluster information if missing.
-    Boolean withDataCenterInfo =  path.toUri().getPath().startsWith("/smf1/");
+    boolean withDataCenterInfo =  path.toUri().getPath().startsWith("/smf1/");
     String updatedPath = '/' + dataCenter + '/' + cluster + path.toUri().getPath();
     Path locationTmpFix = new Path(path.toUri().getScheme(), fsURI.getAuthority(), withDataCenterInfo ? path.toUri().getPath() : updatedPath);
     return locationTmpFix.toUri().toString();
