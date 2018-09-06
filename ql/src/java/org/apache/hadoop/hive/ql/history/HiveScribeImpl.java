@@ -19,6 +19,8 @@ import org.slf4j.LoggerFactory;
 public class HiveScribeImpl implements HiveHistory {
   private static final Logger LOG = LoggerFactory.getLogger("hive.ql.exec.HiveScribeImpl");
 
+  private QueryCompletedEventScriber hiveHistScriber = new QueryCompletedEventScriber();
+
   private Map<String, String> idToTableMap = null;
 
   // Job Hash Map
@@ -37,7 +39,7 @@ public class HiveScribeImpl implements HiveHistory {
   /**
    * Construct HiveScribeImpl object and scribe query metric to log pipeline.
    */
-  public HiveScribeImpl(SessionState sessionState) {
+  public HiveScribeImpl() {
     LOG.info("Instantiated an instance for HiveScribeImpl to scribe query logs.");
   }
 
@@ -58,7 +60,7 @@ public class HiveScribeImpl implements HiveHistory {
       LOG.info("Stats is null. Nothing passed to log pipeline");
       return;
     }
-    QueryCompletedEventScriber hiveHistScriber = new QueryCompletedEventScriber();
+
     hiveHistScriber.handle(stats);
     LOG.info("Query stats passed to log pipeline");
   }
@@ -71,7 +73,7 @@ public class HiveScribeImpl implements HiveHistory {
       return;
     }
 
-    HiveHistory.QueryInfo newQueryInfo = createNewQueryEventEntry(id, cmd);
+    QueryInfo newQueryInfo = createNewQueryEventEntry(id, cmd);
     queryInfoMap.put(id, newQueryInfo);
 
     QueryStats newQueryStats = createNewQueryMetricEntry(newQueryInfo.hm, timeStamp);
@@ -95,7 +97,7 @@ public class HiveScribeImpl implements HiveHistory {
   }
 
   private QueryInfo createNewQueryEventEntry(String queryId, String queryCommand) {
-    QueryInfo queryInfo = new HiveHistory.QueryInfo();
+    QueryInfo queryInfo = new QueryInfo();
     queryInfo.hm.put(Keys.QUERY_ID.name(), queryId);
     queryInfo.hm.put(Keys.QUERY_STRING.name(), queryCommand);
     return queryInfo;
@@ -103,7 +105,7 @@ public class HiveScribeImpl implements HiveHistory {
 
   @Override
   public void setQueryProperty(String queryId, HiveHistory.Keys propName, String propValue) {
-    HiveHistory.QueryInfo queryInfo = queryInfoMap.get(queryId);
+    QueryInfo queryInfo = queryInfoMap.get(queryId);
     if (queryInfo == null) {
       return;
     }
@@ -123,9 +125,9 @@ public class HiveScribeImpl implements HiveHistory {
   @Override
   public void setTaskCounters(String queryId, String taskId, Counters counters) {
     String id = queryId + ":" + taskId;
-    HiveHistory.QueryInfo queryInfo = queryInfoMap.get(queryId);
+    QueryInfo queryInfo = queryInfoMap.get(queryId);
     StringBuilder stringBuilderRowsInserted = new StringBuilder("");
-    HiveHistory.TaskInfo taskInfo = taskInfoMap.get(id);
+    TaskInfo taskInfo = taskInfoMap.get(id);
     if ((taskInfo == null) || (counters == null)) {
       return;
     }
@@ -215,7 +217,7 @@ public class HiveScribeImpl implements HiveHistory {
   @Override
   public void startTask(String queryId, Task<? extends Serializable> task, String taskName) {
     Long timeStamp = System.currentTimeMillis();
-    HiveHistory.TaskInfo taskInfo = createNewTaskEventEntry(queryId, task.getId(), taskName);
+    TaskInfo taskInfo = createNewTaskEventEntry(queryId, task.getId(), taskName);
     String id = queryId + ":" + task.getId();
     taskInfoMap.put(id, taskInfo);
     QueryStats stats = queryStatsMap.get(queryId);
@@ -223,7 +225,7 @@ public class HiveScribeImpl implements HiveHistory {
   }
 
   private TaskInfo createNewTaskEventEntry(String queryId, String taskId, String taskName) {
-    TaskInfo taskInfo = new HiveHistory.TaskInfo();
+    TaskInfo taskInfo = new TaskInfo();
     taskInfo.hm.put(HiveHistory.Keys.QUERY_ID.name(), queryId);
     taskInfo.hm.put(HiveHistory.Keys.TASK_ID.name(), taskId);
     taskInfo.hm.put(HiveHistory.Keys.TASK_NAME.name(), taskName);
@@ -234,7 +236,7 @@ public class HiveScribeImpl implements HiveHistory {
   public void endTask(String queryId, Task<? extends Serializable> task) {
     Long timeStamp = System.currentTimeMillis();
     String id = queryId + ":" + task.getId();
-    HiveHistory.TaskInfo taskInfo = taskInfoMap.get(id);
+    TaskInfo taskInfo = taskInfoMap.get(id);
     if (taskInfo == null) {
       return;
     }

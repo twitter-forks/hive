@@ -568,7 +568,7 @@ public class SessionState {
       if (startSs.getConf().getBoolVar(HiveConf.ConfVars.HIVE_SESSION_HISTORY_ENABLED)) {
         if (startSs.getConf().getBoolVar(HiveConf.ConfVars.HIVE_SESSION_HISTORY_SCRIBE_ENABLED) &&
             !HiveConf.getVar(startSs.getConf(), HiveConf.ConfVars.HIVE_EXECUTION_ENGINE).equals("tez")) {
-          startSs.hiveHist = new HiveScribeImpl(startSs);
+          startSs.hiveHist = new HiveScribeImpl();
         } else {
           startSs.hiveHist = new HiveHistoryImpl(startSs);
         }
@@ -1007,7 +1007,7 @@ public class SessionState {
       // Uses a no-op proxy
       if (ss.hiveHist.getHistFileName() == null) {
         if (ss.getConf().getBoolVar(HiveConf.ConfVars.HIVE_SESSION_HISTORY_SCRIBE_ENABLED)) {
-          ss.hiveHist = new HiveScribeImpl(ss);
+          ss.hiveHist = new HiveScribeImpl();
         } else {
           ss.hiveHist = new HiveHistoryImpl(ss);
         }
