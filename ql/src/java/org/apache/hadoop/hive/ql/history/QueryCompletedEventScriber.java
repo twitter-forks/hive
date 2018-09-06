@@ -23,6 +23,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.collect.ImmutableMap;
+
 import org.apache.hadoop.hive.ql.MapRedStats;
 import org.apache.hadoop.hive.ql.QueryPlan;
 import org.apache.hadoop.hive.ql.QueryStats;
@@ -53,7 +55,7 @@ public class QueryCompletedEventScriber {
 
   private static final Logger LOG = LoggerFactory.getLogger("hive.ql.exec.HiveScribeImpl");
 
-  private TwitterScriber scriber = new TwitterScriber("hive_query_completion");
+  private static TwitterScriber scriber = new TwitterScriber("hive_query_completion");
 
   public void handle(QueryStats event) {
     try {
@@ -112,11 +114,12 @@ public class QueryCompletedEventScriber {
     thriftPlanDetails.setDone(plan.getDone().toString());
     thriftPlanDetails.setStarted(plan.getStarted().toString());
 
-    thriftPlanDetails.setQueryAttributes(new HashMap<>());
-    setMapValForString(thriftPlanDetails.getQueryAttributes(), plan.getQuery().getQueryAttributes());
-
-    thriftPlanDetails.setQueryCounters(new HashMap<>());
-    setMapValForLong(thriftPlanDetails.getQueryCounters(), plan.getQuery().getQueryCounters());
+    if (plan.getQuery().getQueryAttributes() != null) {
+      thriftPlanDetails.setQueryAttributes(ImmutableMap.copyOf(plan.getQuery().getQueryAttributes()));
+    }
+    if (plan.getQuery().getQueryCounters() != null) {
+      thriftPlanDetails.setQueryCounters(ImmutableMap.copyOf(plan.getQuery().getQueryCounters()));
+    }
 
     thriftPlanDetails.setStageGraph(new GraphInfo());
     setStageGraph(thriftPlanDetails.getStageGraph(), plan.getQuery().getStageGraph());
@@ -173,11 +176,12 @@ public class QueryCompletedEventScriber {
       stageEnt.setStageId(stage.getStageId());
       stageEnt.setStageType(stage.getStageType().toString());
 
-      stageEnt.setStageAttributes(new HashMap<>());
-      setMapValForString(stageEnt.getStageAttributes(), stage.getStageAttributes());
-
-      stageEnt.setStageCounters(new HashMap<>());
-      setMapValForLong(stageEnt.getStageCounters(), stage.getStageCounters());
+      if (stage.getStageAttributes() != null) {
+        stageEnt.setStageAttributes(ImmutableMap.copyOf(stage.getStageAttributes()));
+      }
+      if (stage.getStageCounters() != null) {
+        stageEnt.setStageCounters(ImmutableMap.copyOf(stage.getStageCounters()));
+      }
 
       stageEnt.setTaskList(new ArrayList<>());
       setTaskList(stageEnt.getTaskList(), stage.getTaskList());
@@ -199,11 +203,12 @@ public class QueryCompletedEventScriber {
       thriftTaskListEnt.setDone(task.isDone());
       thriftTaskListEnt.setStarted(task.isStarted());
 
-      thriftTaskListEnt.setTaskAttributes(new HashMap<>());
-      setMapValForString(thriftTaskListEnt.getTaskAttributes(), task.getTaskAttributes());
-
-      thriftTaskListEnt.setTaskCounters(new HashMap<>());
-      setMapValForLong(thriftTaskListEnt.getTaskCounters(), task.getTaskCounters());
+      if (task.getTaskAttributes() != null) {
+        thriftTaskListEnt.setTaskAttributes(ImmutableMap.copyOf(task.getTaskAttributes()));
+      }
+      if (task.getTaskCounters() != null) {
+        thriftTaskListEnt.setTaskCounters(ImmutableMap.copyOf(task.getTaskCounters()));
+      }
 
       thriftTaskListEnt.setOperatorGraph(new GraphInfo());
       setOperatorGraph(thriftTaskListEnt.getOperatorGraph(), task.getOperatorGraph());
@@ -224,28 +229,6 @@ public class QueryCompletedEventScriber {
       thriftProgressInfo.setTimeStamp(tDetail.getTimeStamp());
       thriftProgressInfo.setProgress(tDetail.getProgress());
       thriftTaskProgress.add(thriftProgressInfo);
-    }
-  }
-
-  private static void setMapValForString(Map<String, String> thriftConfigs, Map<String, String> configs) {
-    if (configs == null) {
-      return;
-    }
-    for (Map.Entry<String, String> ent : configs.entrySet()) {
-      String key = ent.getKey();
-      String val = ent.getValue();
-      thriftConfigs.put(key, val);
-    }
-  }
-
-  private static void setMapValForLong(Map<String, Long> thriftConfigs, Map<String, Long> configs) {
-    if (configs == null) {
-      return;
-    }
-    for (Map.Entry<String, Long> ent : configs.entrySet()) {
-      String key = ent.getKey();
-      Long val = ent.getValue();
-      thriftConfigs.put(key, val);
     }
   }
 
@@ -286,10 +269,12 @@ public class QueryCompletedEventScriber {
       operatorInfo.setOperatorType(operator.getOperatorType().toString());
       operatorInfo.setDone(operator.isDone());
       operatorInfo.setStarted(operator.isStarted());
-      operatorInfo.setOperatorAttributes(new HashMap<>());
-      setMapValForString(operatorInfo.getOperatorAttributes(), operator.getOperatorAttributes());
-      operatorInfo.setOperatorCounters(new HashMap<>());
-      setMapValForLong(operatorInfo.getOperatorCounters(), operator.getOperatorCounters());
+      if (operator.getOperatorAttributes() != null) {
+        operatorInfo.setOperatorAttributes(ImmutableMap.copyOf(operator.getOperatorAttributes()));
+      }
+      if (operator.getOperatorCounters() != null) {
+        operatorInfo.setOperatorCounters(ImmutableMap.copyOf(operator.getOperatorCounters()));
+      }
       thriftOperatorList.add(operatorInfo);
     }
   }
