@@ -37,7 +37,6 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.lib.input.CombineFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hadoop.util.Shell;
 import org.apache.hive.common.HiveCompat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -994,6 +993,9 @@ public class HiveConf extends Configuration {
 
     HIVE_SESSION_HISTORY_ENABLED("hive.session.history.enabled", false,
         "Whether to log Hive query, query plan, runtime statistics etc."),
+
+    HIVE_SESSION_HISTORY_SCRIBE_ENABLED("hive.session.history.scribe.enabled", false,
+        "Whether to scribe Hive query statistics to logpipeline. Available only if hive.session.history.enabled is TRUE"),
 
     HIVEQUERYSTRING("hive.query.string", "",
         "Query being executed (might be multiple per a session)"),

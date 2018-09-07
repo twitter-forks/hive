@@ -66,6 +66,7 @@ import org.apache.hadoop.hive.ql.exec.tez.TezSessionState;
 import org.apache.hadoop.hive.ql.history.HiveHistory;
 import org.apache.hadoop.hive.ql.history.HiveHistoryImpl;
 import org.apache.hadoop.hive.ql.history.HiveHistoryProxyHandler;
+import org.apache.hadoop.hive.ql.history.HiveScribeImpl;
 import org.apache.hadoop.hive.ql.lockmgr.HiveTxnManager;
 import org.apache.hadoop.hive.ql.lockmgr.LockException;
 import org.apache.hadoop.hive.ql.lockmgr.TxnManagerFactory;
@@ -565,7 +566,12 @@ public class SessionState {
 
     if (startSs.hiveHist == null){
       if (startSs.getConf().getBoolVar(HiveConf.ConfVars.HIVE_SESSION_HISTORY_ENABLED)) {
-        startSs.hiveHist = new HiveHistoryImpl(startSs);
+        if (startSs.getConf().getBoolVar(HiveConf.ConfVars.HIVE_SESSION_HISTORY_SCRIBE_ENABLED) &&
+            !HiveConf.getVar(startSs.getConf(), HiveConf.ConfVars.HIVE_EXECUTION_ENGINE).equals("tez")) {
+          startSs.hiveHist = new HiveScribeImpl();
+        } else {
+          startSs.hiveHist = new HiveHistoryImpl(startSs);
+        }
       } else {
         // Hive history is disabled, create a no-op proxy
         startSs.hiveHist = HiveHistoryProxyHandler.getNoOpHiveHistoryProxy();
@@ -1000,7 +1006,11 @@ public class SessionState {
     if (historyEnabled) {
       // Uses a no-op proxy
       if (ss.hiveHist.getHistFileName() == null) {
-        ss.hiveHist = new HiveHistoryImpl(ss);
+        if (ss.getConf().getBoolVar(HiveConf.ConfVars.HIVE_SESSION_HISTORY_SCRIBE_ENABLED)) {
+          ss.hiveHist = new HiveScribeImpl();
+        } else {
+          ss.hiveHist = new HiveHistoryImpl(ss);
+        }
       }
     } else {
       if (ss.hiveHist.getHistFileName() != null) {
