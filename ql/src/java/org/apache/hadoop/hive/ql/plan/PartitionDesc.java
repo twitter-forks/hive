@@ -174,6 +174,11 @@ public class PartitionDesc implements Serializable, Cloneable {
   public Deserializer getDeserializer(Configuration conf) throws Exception {
     Properties schema = getProperties();
     String clazzName = getDeserializerClassName();
+    if (schema != null &&
+        schema.getProperty(serdeConstants.SERIALIZATION_CLASS) != null &&
+        "com.facebook.presto.twitter.hive.thrift.ThriftGenericRow".equals(schema.getProperty(serdeConstants.SERIALIZATION_CLASS)))
+      clazzName = "org.apache.hadoop.hive.ql.io.thrift.twitter.ThriftGeneralDeserializer";
+
     Deserializer deserializer = ReflectionUtil.newInstance(conf.getClassByName(clazzName)
         .asSubclass(Deserializer.class), conf);
     SerDeUtils.initializeSerDe(deserializer, conf, getTableDesc().getProperties(), schema);

@@ -40,6 +40,12 @@
       <artifactId>util-logging_2.10</artifactId>
     </dependency>
     <dependency>
+        <groupId>com.twitter.elephantbird</groupId>
+        <artifactId>elephant-bird-core</artifactId>
+        <version>4.15</version>
+        <classifier>thrift9</classifier>
+    </dependency>
+    <dependency>
       <groupId>org.apache.thrift</groupId>
       <artifactId>libthrift</artifactId>
     </dependency>
