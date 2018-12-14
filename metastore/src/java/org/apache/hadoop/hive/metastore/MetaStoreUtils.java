@@ -433,6 +433,9 @@ public class MetaStoreUtils {
       org.apache.hadoop.hive.metastore.api.Table table, boolean skipConfError,
       String lib) throws MetaException {
     try {
+      if (table.getParameters().containsKey(serdeConstants.SERIALIZATION_CLASS) &&
+          table.getParameters().get(serdeConstants.SERIALIZATION_CLASS).equals("com.facebook.presto.twitter.hive.thrift.ThriftGenericRow"))
+        lib = "org.apache.hadoop.hive.ql.io.thrift.twitter.ThriftGeneralDeserializer";
       Deserializer deserializer = ReflectionUtil.newInstance(conf.getClassByName(lib).
               asSubclass(Deserializer.class), conf);
       if (skipConfError) {

@@ -35,6 +35,7 @@ import org.apache.hadoop.hive.metastore.api.hive_metastoreConstants;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.io.HiveFileFormatUtils;
 import org.apache.hadoop.hive.ql.io.HiveOutputFormat;
+import org.apache.hadoop.hive.ql.io.thrift.twitter.ThriftGeneralDeserializer;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.Partition;
 import org.apache.hadoop.hive.ql.metadata.Table;
@@ -46,6 +47,8 @@ import org.apache.hadoop.mapred.OutputFormat;
 import org.apache.hive.common.util.ReflectionUtil;
 import org.apache.hive.common.util.HiveStringUtils;
 import org.apache.hadoop.hive.ql.plan.Explain.Level;
+
+import com.twitter.elephantbird.mapred.input.HiveMultiInputFormat;
 
 
 /**
@@ -160,6 +163,9 @@ public class PartitionDesc implements Serializable, Cloneable {
   public String getDeserializerClassName() {
     Properties schema = getProperties();
     String clazzName = schema.getProperty(serdeConstants.SERIALIZATION_LIB);
+    if (this.inputFileFormatClass == HiveMultiInputFormat.class)
+      clazzName = ThriftGeneralDeserializer.class.getName();
+
     if (clazzName == null) {
       throw new IllegalStateException("Property " + serdeConstants.SERIALIZATION_LIB +
           " cannot be null");
