@@ -42,8 +42,7 @@ import org.slf4j.LoggerFactory;
 
 public class ThriftGeneralDeserializer implements Deserializer
 {
-  private static final String REQUIRED_SERIALIZATION_CLASS = ThriftGenericRow.class.getName();
-  public static final Logger LOG = LoggerFactory.getLogger(REQUIRED_SERIALIZATION_CLASS);
+  public static final Logger LOG = LoggerFactory.getLogger(ThriftGeneralDeserializer.class.getName());
 
   public ThriftGeneralDeserializer()
   { }
