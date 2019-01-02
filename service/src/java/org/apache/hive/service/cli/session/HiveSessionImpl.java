@@ -277,7 +277,8 @@ public class HiveSessionImpl implements HiveSession {
       } else if (key.startsWith("use:")) {
         try {
           if (sessionHive.getDatabase(entry.getValue()) == null) {
-            throw new HiveSQLException("Database " + entry.getValue() + " does not exist");
+            //throw new HiveSQLException("Database " + entry.getValue() + " does not exist");
+            continue;
           }
         } catch (HiveException e) {
           throw new HiveSQLException(e);
