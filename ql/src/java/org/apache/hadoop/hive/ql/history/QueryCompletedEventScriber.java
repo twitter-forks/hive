@@ -55,7 +55,7 @@ public class QueryCompletedEventScriber {
 
   private static final Logger LOG = LoggerFactory.getLogger("hive.ql.exec.HiveScribeImpl");
 
-  private static TwitterScriber scriber = new TwitterScriber("hive_query_completion");
+  protected TwitterScriber scriber = new TwitterScriber("hive_query_completion");
 
   public void handle(QueryStats event) {
     try {
@@ -154,16 +154,18 @@ public class QueryCompletedEventScriber {
       return;
     }
     for (Map.Entry<String, MapRedStats> ent : mapReduceInfo.entrySet()) {
-      QueryStageInfo thriftCounterInfo = new QueryStageInfo();
+      QueryStageInfo thriftStageInfo = new QueryStageInfo();
       String key = ent.getKey();
-      thriftCounterInfo.setStageId(key);
-      thriftCounterInfo.setJobId(ent.getValue().getJobId());
-      thriftCounterInfo.setCpuMsec(ent.getValue().getCpuMSec());
-      thriftCounterInfo.setCounters(ent.getValue().getCounters().toString());
-      thriftCounterInfo.setNumberMappers(ent.getValue().getNumMap());
-      thriftCounterInfo.setNumberReducers(ent.getValue().getNumReduce());
-      thriftCounterInfo.setTaskNumbers(ent.getValue().getTaskNumbers());
-      thriftMapReduceInfo.put(key, thriftCounterInfo);
+      thriftStageInfo.setStageId(key);
+      thriftStageInfo.setJobId(ent.getValue().getJobId());
+      thriftStageInfo.setCpuMsec(ent.getValue().getCpuMSec());
+      if (ent.getValue().getCounters() != null) {
+        thriftStageInfo.setCounters(ent.getValue().getCounters().toString());
+      }
+      thriftStageInfo.setNumberMappers(ent.getValue().getNumMap());
+      thriftStageInfo.setNumberReducers(ent.getValue().getNumReduce());
+      thriftStageInfo.setTaskNumbers(ent.getValue().getTaskNumbers());
+      thriftMapReduceInfo.put(key, thriftStageInfo);
     }
   }
 

@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 public class HiveScribeImpl implements HiveHistory {
   private static final Logger LOG = LoggerFactory.getLogger("hive.ql.exec.HiveScribeImpl");
 
-  private QueryCompletedEventScriber hiveHistScriber = new QueryCompletedEventScriber();
+  protected QueryCompletedEventScriber hiveHistScriber = new QueryCompletedEventScriber();
 
   private Map<String, String> idToTableMap = null;
 
@@ -69,6 +69,10 @@ public class HiveScribeImpl implements HiveHistory {
   public void startQuery(String cmd, String id) {
     Long timeStamp = System.currentTimeMillis();
     SessionState sessionState = SessionState.get();
+    startQuery(cmd, id, sessionState, timeStamp);
+  }
+
+  protected void startQuery(String cmd, String id, SessionState sessionState, Long timeStamp) {
     if (sessionState == null) {
       return;
     }
@@ -179,9 +183,8 @@ public class HiveScribeImpl implements HiveHistory {
   public void printRowCount(String queryId) {
   }
 
-  private void addSessionInfo(String queryId) {
+  private void addSessionInfo(String queryId, SessionState sessionState) {
     QueryStats stats = queryStatsMap.get(queryId);
-    SessionState sessionState = SessionState.get();
     if (sessionState == null) {
       return;
     }
@@ -189,26 +192,28 @@ public class HiveScribeImpl implements HiveHistory {
     String ipAddress = sessionState.getUserIpAddress();
     String sessionId = sessionState.getSessionId();
     String currentDatabase = sessionState.getCurrentDatabase();
-    String currentTimeStamp = sessionState.getQueryCurrentTimestamp().toString();
-    assert (userName != null && ipAddress != null && sessionId != null && currentDatabase != null && currentTimeStamp != null)
-        : "Query information is incomplete.";
+    assert userName != null : "Missing userName";
+    assert ipAddress != null : "Missing ipAddress";
+    assert sessionId != null : "Missing sessionId";
+    assert currentDatabase != null : "Missing currentDatabase";
     stats.setUsername(userName);
     stats.setIPAddress(sessionState.getUserIpAddress());
     stats.setSessionID(sessionState.getSessionId());
     stats.setDatabase(sessionState.getCurrentDatabase());
-    stats.setCurrentTimeStamp(sessionState.getQueryCurrentTimestamp().toString());
     stats.setMapReduceStats(sessionState.getMapRedStats());
-    if (sessionState.getMapRedStats() != null) {
-      stats.setMapReduceStatsDesc(sessionState.getMapRedStats().toString());
-    }
   }
 
   @Override
   public void endQuery(String queryId) {
+    SessionState sessionState = SessionState.get();
     Long timeStamp = System.currentTimeMillis();
+    endQuery(queryId, sessionState, timeStamp);
+  }
+
+  protected void endQuery(String queryId, SessionState sessionState, Long timeStamp) {
     QueryStats stats = queryStatsMap.get(queryId);
     stats.setEndTime(timeStamp);
-    addSessionInfo(queryId);
+    addSessionInfo(queryId, sessionState);
     scribeQueryMetricEntry(queryId);
     queryInfoMap.remove(queryId);
     queryStatsMap.remove(queryId);
@@ -217,8 +222,13 @@ public class HiveScribeImpl implements HiveHistory {
   @Override
   public void startTask(String queryId, Task<? extends Serializable> task, String taskName) {
     Long timeStamp = System.currentTimeMillis();
-    TaskInfo taskInfo = createNewTaskEventEntry(queryId, task.getId(), taskName);
-    String id = queryId + ":" + task.getId();
+    String taskId = task.getId();
+    startTask(queryId, taskId, taskName, timeStamp);
+  }
+
+  protected void startTask(String queryId, String taskId, String taskName, Long timeStamp) {
+    TaskInfo taskInfo = createNewTaskEventEntry(queryId, taskId, taskName);
+    String id = queryId + ":" + taskId;
     taskInfoMap.put(id, taskInfo);
     QueryStats stats = queryStatsMap.get(queryId);
     logTaskProgress(RecordTypes.TaskStart, stats, taskInfo.hm, timeStamp);
@@ -235,7 +245,11 @@ public class HiveScribeImpl implements HiveHistory {
   @Override
   public void endTask(String queryId, Task<? extends Serializable> task) {
     Long timeStamp = System.currentTimeMillis();
-    String id = queryId + ":" + task.getId();
+    endTask(queryId, task.getId(), timeStamp);
+  }
+
+  protected void endTask(String queryId, String taskId, Long timeStamp) {
+    String id = queryId + ":" + taskId;
     TaskInfo taskInfo = taskInfoMap.get(id);
     if (taskInfo == null) {
       return;
@@ -248,7 +262,11 @@ public class HiveScribeImpl implements HiveHistory {
   @Override
   public void progressTask(String queryId, Task<? extends Serializable> task) {
     Long timeStamp = System.currentTimeMillis();
-    String id = queryId + ":" + task.getId();
+    progressTask(queryId, task.getId(), timeStamp);
+  }
+
+  protected void progressTask(String queryId, String taskId, Long timeStamp) {
+    String id = queryId + ":" + taskId;
     TaskInfo taskInfo = taskInfoMap.get(id);
     if (taskInfo == null) {
       return;
@@ -289,6 +307,10 @@ public class HiveScribeImpl implements HiveHistory {
   @Override
   public void logPlanProgress(QueryPlan plan) throws IOException {
     long timeStamp = System.currentTimeMillis();
+    logPlanProgress(plan, timeStamp);
+  }
+
+  protected void logPlanProgress(QueryPlan plan, Long timeStamp) throws IOException {
     if (plan == null) {
       return;
     }
