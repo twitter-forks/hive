@@ -1,6 +1,7 @@
 package org.apache.hadoop.hive.ql.history;
 
 import java.io.IOException;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,6 +10,8 @@ import org.apache.hadoop.hive.ql.QueryPlan;
 import org.apache.hadoop.hive.ql.plan.api.Query;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.ql.thrift.hive.HiveQueryCompletionEvent;
+import org.apache.thrift.TBase;
+import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,6 +21,7 @@ import static org.mockito.Mockito.*;
 import static org.junit.Assert.*;
 
 public class TestHiveScribeImpl {
+  private static final TDeserializer tDeserializer = new TDeserializer();
   private HiveScribeImpl hiveScriber = null;
   private TwitterScriber twitterScriber = null;
   private SessionState sessionState = null;
@@ -31,6 +35,7 @@ public class TestHiveScribeImpl {
   private String sessionId;
   private String dataBase;
   private String planInfoFormat;
+  private String scribeCategoryName;
   private String taskName;
   private String taskId;
   private String taskProgress;
@@ -56,6 +61,7 @@ public class TestHiveScribeImpl {
     dataBase = "default";
     queryStartTime = Long.parseLong("1539222821986");
     queryEndTime = Long.parseLong("1539223547219");
+    scribeCategoryName = "unit_test";
 
     taskName = "org.apache.hadoop.hive.ql.exec.DDLTask";
     taskId = "Stage-0";
@@ -96,7 +102,7 @@ public class TestHiveScribeImpl {
     when(sessionState.getCurrentDatabase()).thenReturn(dataBase);
     when(sessionState.getMapRedStats()).thenReturn(mapRedStats);
 
-    twitterScriber = Mockito.mock(TwitterScriber.class);
+    twitterScriber = Mockito.spy(new TwitterScriber(scribeCategoryName));
     hiveScriber.hiveHistScriber.scriber = twitterScriber;
 
     hiveScriber.startQuery(queryString, queryId, sessionState, queryStartTime);
@@ -129,9 +135,12 @@ public class TestHiveScribeImpl {
     hiveScriber.endQuery(queryId, sessionState, queryEndTime);
 
     // Capture log event at scribe()
-    ArgumentCaptor<HiveQueryCompletionEvent> arg = ArgumentCaptor.forClass(HiveQueryCompletionEvent.class);
+    ArgumentCaptor<String> arg = ArgumentCaptor.forClass(String.class);
     Mockito.verify(hiveScriber.hiveHistScriber.scriber).scribe(arg.capture());
-    HiveQueryCompletionEvent tEvent = arg.getValue();
+
+    String tMessage = arg.getValue();
+    HiveQueryCompletionEvent tEvent = new HiveQueryCompletionEvent();
+    tDeserializer.deserialize(tEvent, Base64.getDecoder().decode(tMessage));
 
     assertEquals(queryId, tEvent.queryId);
     assertEquals(queryString, tEvent.queryString);
