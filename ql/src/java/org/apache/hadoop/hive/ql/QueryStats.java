@@ -16,8 +16,6 @@ public class QueryStats {
   private String IPAddress;
   private String username;
   private String database;
-  private String mapReduceStatsDesc;
-  private String currentTimeStamp;
   private ArrayList<taskDetail> taskProgress;
   private ArrayList<plan> planProgress;
   private Map<String, MapRedStats> mapReduceStats;
@@ -137,22 +135,6 @@ public class QueryStats {
 
   public String getDatabase() {
     return this.database;
-  }
-
-  public void setMapReduceStatsDesc(String MapReduceStatsDesc) {
-    this.mapReduceStatsDesc = MapReduceStatsDesc;
-  }
-
-  public String getMapReduceStatsDesc() {
-    return this.mapReduceStatsDesc;
-  }
-
-  public void setCurrentTimeStamp(String currentTimeStamp) {
-    this.currentTimeStamp = currentTimeStamp;
-  }
-
-  public String getCurrentTimeStamp() {
-    return this.currentTimeStamp;
   }
 
   public ArrayList<taskDetail> getTaskProgress() {
