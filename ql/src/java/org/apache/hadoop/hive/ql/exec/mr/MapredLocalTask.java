@@ -255,7 +255,10 @@ public class MapredLocalTask extends Task<MapredLocalWork> implements Serializab
       // }
 
       //Clear system property HADOOP_USER_NAME for child process, to avoid exception
-      // raised for HADOOP_USER_NAME_UNSUPPORTED
+      // raised for HADOOP_USER_NAME_UNSUPPORTED. This is to adapt to a specific change on Hadoop
+      // cluster at Twitter, where login method of using HADOOP_USER_NAME through environment
+      // variable or system property is disabled. Non-null values of HADOOP_USER_NAME would raise
+      // exception.
       // This will be used by hadoop only in unsecure(/non kerberos) mode
       System.clearProperty("HADOOP_USER_NAME");
 
