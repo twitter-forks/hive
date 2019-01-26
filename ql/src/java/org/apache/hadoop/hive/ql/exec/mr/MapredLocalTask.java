@@ -254,12 +254,10 @@ public class MapredLocalTask extends Task<MapredLocalWork> implements Serializab
 
       // }
 
-      //Set HADOOP_USER_NAME env variable for child process, so that
-      // it also runs with hadoop permissions for the user the job is running as
+      //Clear system property HADOOP_USER_NAME for child process, to avoid exception
+      // raised for HADOOP_USER_NAME_UNSUPPORTED
       // This will be used by hadoop only in unsecure(/non kerberos) mode
-      String endUserName = Utils.getUGI().getShortUserName();
-      LOG.debug("setting HADOOP_USER_NAME\t" + endUserName);
-      variables.put("HADOOP_USER_NAME", endUserName);
+      System.clearProperty("HADOOP_USER_NAME");
 
       if (variables.containsKey(HADOOP_OPTS_KEY)) {
         variables.put(HADOOP_OPTS_KEY, variables.get(HADOOP_OPTS_KEY) + hadoopOpts);
