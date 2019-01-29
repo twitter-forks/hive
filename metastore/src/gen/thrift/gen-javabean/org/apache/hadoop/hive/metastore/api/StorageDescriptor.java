@@ -341,9 +341,6 @@ public class StorageDescriptor implements org.apache.thrift.TBase<StorageDescrip
   // Return a generalized partition URI to support cross-cluster queries by extending the case with mount point to cover both cases,
   // including a special case, e.g., hadoop-dw2-nn.smf1.twitter.com/smf1/dw2/logs/hive_query_completion/2018/08/30/10, which has a dummy mount point.
   public String getLocation() {
-    if(this.location == null) {
-      return null;
-    }
     Configuration conf = new Configuration();
     URI fsURI = FileSystem.getDefaultUri(conf);
     Path path = new Path(this.location);
