@@ -109,6 +109,28 @@ public class DataWritableReadSupport extends ReadSupport<ArrayWritable> {
   }
 
   /**
+   * Searchs for a fieldName into a parquet Type list by ignoring string case.
+   *
+   * @param typeList Group of field types where to search for fieldName
+   * @param fieldName The field what we are searching
+   * @return The Type object of the field found; null otherwise.
+   */
+  private static Type getFieldTypeIgnoreCase(List<Type> typeList, String fieldName) {
+    for (Type type : typeList) {
+      if (type.getName().equalsIgnoreCase(fieldName)) {
+        return type;
+      }
+    }
+    //TODO: add unit test for w/ and w/o underscore
+    for (Type type : typeList) {
+      if ((type.getName() + "_").equalsIgnoreCase(fieldName)) {
+        return type;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Searchs column names by name on a given Parquet schema, and returns its corresponded
    * Parquet schema types.
    *
@@ -308,29 +330,24 @@ public class DataWritableReadSupport extends ReadSupport<ArrayWritable> {
     if (nodes.isEmpty()) {
       return res;
     }
-    Map<String, FieldNode> fieldMap = new HashMap<>();
-    for (FieldNode n : nodes) {
-      fieldMap.put(n.getFieldName().toLowerCase(), n);
-    }
-    for (Type type : types) {
-      String tn = type.getName().toLowerCase();
 
-      if (fieldMap.containsKey(tn)) {
-        FieldNode f = fieldMap.get(tn);
-        if (f.getNodes().isEmpty()) {
+    for (FieldNode node : nodes) {
+      Type fieldType = getFieldTypeIgnoreCase(types, node.getFieldName());
+      if (fieldType != null) {
+        if (node.getNodes().isEmpty()) {
           // no child, no need for pruning
-          res.add(type);
+          res.add(fieldType);
         } else {
-          if (type instanceof GroupType) {
-            GroupType groupType = type.asGroupType();
-            List<Type> ts = projectLeafTypes(groupType.getFields(), f.getNodes());
+          if (fieldType instanceof GroupType) {
+            GroupType groupType = fieldType.asGroupType();
+            List<Type> ts = projectLeafTypes(groupType.getFields(), node.getNodes());
             GroupType g = buildProjectedGroupType(groupType, ts);
             if (g != null) {
               res.add(g);
             }
           } else {
             throw new RuntimeException(
-              "Primitive type " + f.getFieldName() + "should not " + "doesn't match type" + f
+              "Primitive type " + node.getFieldName() + "should not " + "doesn't match type" + node
                 .toString());
           }
         }
