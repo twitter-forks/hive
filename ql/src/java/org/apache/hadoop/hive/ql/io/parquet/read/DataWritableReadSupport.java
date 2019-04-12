@@ -86,29 +86,6 @@ public class DataWritableReadSupport extends ReadSupport<ArrayWritable> {
   }
 
   /**
-   * Searchs for a fieldName into a parquet GroupType by ignoring string case.
-   * GroupType#getType(String fieldName) is case sensitive, so we use this method.
-   *
-   * @param groupType Group of field types where to search for fieldName
-   * @param fieldName The field what we are searching
-   * @return The Type object of the field found; null otherwise.
-   */
-  private static Type getFieldTypeIgnoreCase(GroupType groupType, String fieldName) {
-    for (Type type : groupType.getFields()) {
-      if (type.getName().equalsIgnoreCase(fieldName)) {
-        return type;
-      }
-    }
-    //TODO: add unit test for w/ and w/o underscore
-    for (Type type : groupType.getFields()) {
-      if ((type.getName() + "_").equalsIgnoreCase(fieldName)) {
-        return type;
-      }
-    }
-    return null;
-  }
-
-  /**
    * Searchs for a fieldName into a parquet Type list by ignoring string case.
    *
    * @param typeList Group of field types where to search for fieldName
@@ -147,7 +124,7 @@ public class DataWritableReadSupport extends ReadSupport<ArrayWritable> {
       TypeInfo colType = colTypes.get(columnIterator.nextIndex());
       String colName = columnIterator.next();
 
-      Type fieldType = getFieldTypeIgnoreCase(schema, colName);
+      Type fieldType = getFieldTypeIgnoreCase(schema.getFields(), colName);
       if (fieldType == null) {
         schemaTypes.add(Types.optional(PrimitiveTypeName.BINARY).named(colName));
       } else {
