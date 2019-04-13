@@ -12447,8 +12447,8 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         // replace each of the position alias in ORDERBY with the actual column name
         if (orderbyNode != null) {
           isAllCol = false;
-          for (int child_pos = 0; child_pos < selectNodeNoHint.getChildCount(); ++child_pos) {
-            ASTNode node = (ASTNode) selectNodeNoHint.getChild(child_pos).getChild(0);
+          for (int child_pos = 0; child_pos < selectNode.getChildCount(); ++child_pos) {
+            ASTNode node = (ASTNode) selectNode.getChild(child_pos).getChild(0);
             if (node != null && node.getToken().getType() == HiveParser.TOK_ALLCOLREF) {
               isAllCol = true;
             }
