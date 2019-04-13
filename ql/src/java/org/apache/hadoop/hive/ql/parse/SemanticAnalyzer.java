@@ -12409,7 +12409,16 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       }
 
       if (selectNode != null) {
-        int selectExpCnt = selectNode.getChildCount();
+        // Remove QUERY_HINT from SELECT node to align with GROUPBY index
+        ASTNode selectNodeNoHint = new ASTNode(selectNode.getToken());
+        for (int child_pos = 0; child_pos < selectNode.getChildCount(); ++child_pos) {
+          ASTNode node = (ASTNode) selectNode.getChild(child_pos);
+          if (node.getToken().getType() != HiveParser.QUERY_HINT) {
+            selectNodeNoHint.addChild(node);
+          }
+        }
+
+        int selectExpCnt = selectNodeNoHint.getChildCount();
 
         // replace each of the position alias in GROUPBY with the actual column name
         if (groupbyNode != null) {
@@ -12420,7 +12429,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
                 int pos = Integer.parseInt(node.getText());
                 if (pos > 0 && pos <= selectExpCnt) {
                   groupbyNode.setChild(child_pos,
-                    selectNode.getChild(pos - 1).getChild(0));
+                      selectNodeNoHint.getChild(pos - 1).getChild(0));
                 } else {
                   throw new SemanticException(
                     ErrorMsg.INVALID_POSITION_ALIAS_IN_GROUPBY.getMsg(
@@ -12438,8 +12447,8 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         // replace each of the position alias in ORDERBY with the actual column name
         if (orderbyNode != null) {
           isAllCol = false;
-          for (int child_pos = 0; child_pos < selectNode.getChildCount(); ++child_pos) {
-            ASTNode node = (ASTNode) selectNode.getChild(child_pos).getChild(0);
+          for (int child_pos = 0; child_pos < selectNodeNoHint.getChildCount(); ++child_pos) {
+            ASTNode node = (ASTNode) selectNodeNoHint.getChild(child_pos).getChild(0);
             if (node != null && node.getToken().getType() == HiveParser.TOK_ALLCOLREF) {
               isAllCol = true;
             }
@@ -12452,7 +12461,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
                 if (!isAllCol) {
                   int pos = Integer.parseInt(node.getText());
                   if (pos > 0 && pos <= selectExpCnt) {
-                    colNode.setChild(0, selectNode.getChild(pos - 1).getChild(0));
+                    colNode.setChild(0, selectNodeNoHint.getChild(pos - 1).getChild(0));
                   } else {
                     throw new SemanticException(
                       ErrorMsg.INVALID_POSITION_ALIAS_IN_ORDERBY.getMsg(
