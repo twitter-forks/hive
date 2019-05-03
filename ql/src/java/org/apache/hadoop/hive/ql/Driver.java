@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -538,13 +539,19 @@ public class Driver implements CommandProcessor {
       conf.set("mapreduce.workflow.name", queryStr);
 
       String timeStamp = Long.toString(System.currentTimeMillis());
-      conf.set("batch.desc", queryStr + '_' + timeStamp);
-      conf.set("hive.batch.desc", queryStr + '_' + timeStamp);
+      int filterInd = queryStr.toLowerCase().indexOf("where");
+      String appId = "hive_" + timeStamp + queryStr.substring(0, Math.min(filterInd, 80))
+          .replace("select", "")
+          .replace("from", "")
+          .replace("with", "");
+      conf.set("batch.desc", appId.replaceAll("\\s+","_"));
+      conf.set("hive.batch.desc", appId.replaceAll("\\s+","_"));
       conf.set("hive.flow.submitted.timestamp", timeStamp);
+      conf.set("mapreduce.framework.name", "yarn");
       MessageDigest digest = MessageDigest.getInstance("SHA-256");
       byte[] bytes = digest.digest(queryStr.getBytes(StandardCharsets.UTF_8));
       String querySignature = new String(bytes, StandardCharsets.UTF_8);
-      conf.set("hive.query.signature", querySignature.replaceAll("[^a-zA-Z0-9]+","_"));
+      conf.set("hive.signature", querySignature.replaceAll("[^a-zA-Z0-9]+","_"));
 
       // initialize FetchTask right here
       if (plan.getFetchTask() != null) {
