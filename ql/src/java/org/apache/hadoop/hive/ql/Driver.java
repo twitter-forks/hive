@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.net.InetAddress;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,10 +36,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.hive.common.ValidTxnList;
@@ -90,17 +97,16 @@ import org.apache.hadoop.hive.ql.optimizer.ppr.PartitionPruner;
 import org.apache.hadoop.hive.ql.parse.ASTNode;
 import org.apache.hadoop.hive.ql.parse.BaseSemanticAnalyzer;
 import org.apache.hadoop.hive.ql.parse.ColumnAccessInfo;
+import org.apache.hadoop.hive.ql.parse.ExplainConfiguration.AnalyzeState;
 import org.apache.hadoop.hive.ql.parse.HiveSemanticAnalyzerHook;
 import org.apache.hadoop.hive.ql.parse.HiveSemanticAnalyzerHookContext;
 import org.apache.hadoop.hive.ql.parse.HiveSemanticAnalyzerHookContextImpl;
 import org.apache.hadoop.hive.ql.parse.ImportSemanticAnalyzer;
 import org.apache.hadoop.hive.ql.parse.ParseContext;
-import org.apache.hadoop.hive.ql.parse.ParseDriver;
 import org.apache.hadoop.hive.ql.parse.ParseUtils;
 import org.apache.hadoop.hive.ql.parse.PrunedPartitionList;
 import org.apache.hadoop.hive.ql.parse.SemanticAnalyzer;
 import org.apache.hadoop.hive.ql.parse.SemanticAnalyzerFactory;
-import org.apache.hadoop.hive.ql.parse.ExplainConfiguration.AnalyzeState;
 import org.apache.hadoop.hive.ql.plan.FileSinkDesc;
 import org.apache.hadoop.hive.ql.plan.HiveOperation;
 import org.apache.hadoop.hive.ql.plan.TableDesc;
@@ -108,11 +114,11 @@ import org.apache.hadoop.hive.ql.processors.CommandProcessor;
 import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
 import org.apache.hadoop.hive.ql.security.authorization.AuthorizationUtils;
 import org.apache.hadoop.hive.ql.security.authorization.HiveAuthorizationProvider;
+import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveAuthzContext;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveOperationType;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HivePrivilegeObject;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HivePrivilegeObject.HivePrivObjectActionType;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HivePrivilegeObject.HivePrivilegeObjectType;
-import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveAuthzContext;
 import org.apache.hadoop.hive.ql.session.OperationLog;
 import org.apache.hadoop.hive.ql.session.OperationLog.LoggingLevel;
 import org.apache.hadoop.hive.ql.session.SessionState;
@@ -126,10 +132,6 @@ import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hive.common.util.ShutdownHookManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
 
 public class Driver implements CommandProcessor {
 
@@ -535,6 +537,21 @@ public class Driver implements CommandProcessor {
 
       conf.set("mapreduce.workflow.id", "hive_" + queryId);
       conf.set("mapreduce.workflow.name", queryStr);
+
+      String timeStamp = Long.toString(System.currentTimeMillis());
+      int filterInd = queryStr.toLowerCase().indexOf("where");
+      String appId = "hive_" + timeStamp + queryStr.substring(0, Math.min(filterInd, 80))
+          .replace("select", "")
+          .replace("from", "")
+          .replace("with", "");
+      conf.set("batch.desc", appId.replaceAll("\\s+","_"));
+      conf.set("hive.batch.desc", appId.replaceAll("\\s+","_"));
+      conf.set("hive.flow.submitted.timestamp", timeStamp);
+      conf.set("mapreduce.framework.name", "yarn");
+      MessageDigest digest = MessageDigest.getInstance("SHA-256");
+      byte[] bytes = digest.digest(queryStr.getBytes(StandardCharsets.UTF_8));
+      String querySignature = new String(bytes, StandardCharsets.UTF_8);
+      conf.set("hive.signature", querySignature.replaceAll("[^a-zA-Z0-9]+","_"));
 
       // initialize FetchTask right here
       if (plan.getFetchTask() != null) {
