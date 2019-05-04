@@ -133,6 +133,8 @@ import org.apache.hive.common.util.ShutdownHookManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.lang.Math.floorMod;
+
 public class Driver implements CommandProcessor {
 
   static final private String CLASS_NAME = Driver.class.getName();
@@ -539,7 +541,7 @@ public class Driver implements CommandProcessor {
       conf.set("mapreduce.workflow.name", queryStr);
 
       String timeStamp = Long.toString(System.currentTimeMillis());
-      int filterInd = queryStr.toLowerCase().indexOf("where");
+      int filterInd = floorMod(queryStr.toLowerCase().indexOf("where"), queryStr.length());
       String appId = "hive_" + timeStamp + queryStr.substring(0, Math.min(filterInd, 80))
           .replace("select", "")
           .replace("from", "")
